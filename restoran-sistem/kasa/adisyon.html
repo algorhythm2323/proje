@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adisyon - Restoran Yönetim Sistemi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .adisyon-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .adisyon-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .adisyon-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    
+    .adisyon-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .adisyon-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+    }
+    
+    .adisyon-table th,
+    .adisyon-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .adisyon-table th {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .adisyon-total {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-bottom: 1.5rem;
+    }
+    
+    .adisyon-total-row {
+      display: flex;
+      justify-content: space-between;
+      width: 300px;
+      padding: 0.5rem 0;
+    }
+    
+    .adisyon-grand-total {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--secondary-color);
+      border-top: 2px solid #ddd;
+      padding-top: 0.5rem;
+    }
+    
+    .payment-methods {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .payment-method {
+      cursor: pointer;
+      padding: 0.5rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+    }
+    
+    .payment-method.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    .payment-method:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .payment-method.active:hover {
+      background-color: var(--primary-color);
+    }
+    
+    .siparis-bolumleri {
+      margin-top: 2rem;
+    }
+    
+    .siparis-bolum {
+      margin-bottom: 1.5rem;
+    }
+    
+    .siparis-baslik {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .siparis-durum {
+      font-size: 0.8rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background-color: var(--light-color);
+    }
+    
+    .durum-beklemede {
+      background-color: var(--warning-color);
+      color: white;
+    }
+    
+    .durum-hazirlaniyor {
+      background-color: var(--accent-color);
+      color: white;
+    }
+    
+    .durum-hazir {
+      background-color: var(--success-color);
+      color: white;
+    }
+    
+    .durum-teslim_edildi {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .bos-adisyon {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--dark-color);
+    }
+    
+    .masa-bos-mesaj {
+      text-align: center;
+      padding: 2rem;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+    
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      
+      header, .adisyon-actions, button {
+        display: none !important;
+      }
+      
+      body {
+        background-color: white;
+      }
+      
+      .container {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+      }
+      
+      .card {
+        box-shadow: none;
+        border: none;
+      }
+    }
+  </style>
+</head>
+<body data-role="kasa">
+  <header class="no-print">
+    <div class="container header-container">
+      <div class="logo">Restoran Yönetim Sistemi</div>
+      <div class="user-info">
+        <span id="user-name">Kasa</span>
+        <button class="btn btn-secondary" onclick="logout()">Çıkış</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="card">
+        <div class="adisyon-container">
+          <div class="adisyon-header">
+            <a href="index.html" class="btn btn-primary no-print">◀ Geri</a>
+            <div class="adisyon-title" id="adisyon-title">Adisyon</div>
+            <div class="adisyon-actions no-print">
+              <button class="btn btn-accent" onclick="yazdirAdisyon()">Yazdır</button>
+              <button class="btn btn-success" id="hesap-kapat-btn" onclick="hesapKapat()">Hesabı Kapat</button>
+            </div>
+          </div>
+          
+          <div id="adisyon-content">
+            <!-- Adisyon içeriği buraya dinamik olarak eklenecek -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Ödeme Modal -->
+  <div id="odeme-modal" class="notification" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; max-width: 90%; background-color: white; color: black; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 1.5rem; z-index: 1000;">
+    <h2>Ödeme</h2>
+    <p>Toplam Tutar: <span id="odeme-tutar"></span></p>
+    
+    <div class="payment-methods">
+      <div class="payment-method active" onclick="secOdemeYontemi(this, 'nakit')">Nakit</div>
+      <div class="payment-method" onclick="secOdemeYontemi(this, 'kredi')">Kredi Kartı</div>
+      <div class="payment-method" onclick="secOdemeYontemi(this, 'yemek')">Yemek Kartı</div>
+    </div>
+    
+    <div class="form-group">
+      <label for="odenen-tutar">Ödenen Tutar:</label>
+      <input type="number" id="odenen-tutar" class="form-control" step="0.01">
+    </div>
+    
+    <div class="form-group">
+      <label for="para-ustu">Para Üstü:</label>
+      <input type="text" id="para-ustu" class="form-control" readonly>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+      <button class="btn btn-secondary" onclick="iptalOdeme()">İptal</button>
+      <button class="btn btn-success" onclick="tamamlaOdeme()">Ödemeyi Tamamla</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/main.js"></script>
+  <script>
+    // URL'den masa bilgisini al
+    const urlParams = new URLSearchParams(window.location.search);
+    const masaId = urlParams.get('masaId');
+    const masaNo = urlParams.get('masaNo');
+    
+    // Ödeme yöntemi
+    let odemeYontemi = 'nakit';
+    
+    // Adisyon verisi
+    let adisyonData = null;
+    
+    // Gerçek zamanlı dinleyici
+    let siparislerListener = null;
+    
+    // Sayfa yüklendiğinde
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // Kullanıcı oturumunu kontrol et
+        await checkAuth();
+        
+        // Adisyon başlığını ayarla
+        document.getElementById('adisyon-title').textContent = `Masa ${masaNo} - Adisyon`;
+        
+        // Adisyonu yükle
+        loadAdisyon();
+        
+        // Siparişleri gerçek zamanlı olarak dinle
+        listenToSiparisler();
+        
+        // Para üstü hesaplama
+        document.getElementById('odenen-tutar').addEventListener('input', hesaplaParaUstu);
+      } catch (error) {
+        console.error('Hata:', error);
+        window.location.href = '../index.html';
+      }
+    });
+    
+    // Adisyonu yükle
+    async function loadAdisyon() {
+      try {
+        // Önce masa bilgisini al
+        const masa = await getMasaById(masaId);
+        
+        if (!masa) {
+          document.getElementById('adisyon-content').innerHTML = `
+            <div class="bos-adisyon">
+              <p>Masa bulunamadı.</p>
+            </div>
+          `;
+          document.getElementById('hesap-kapat-btn').disabled = true;
+          return;
+        }
+        
+        // Masa boşsa uyarı göster
+        if (masa.durum === 'bos') {
+          document.getElementById('adisyon-content').innerHTML = `
+            <div class="masa-bos-mesaj">
+              <h3>Masa şu anda boş</h3>
+              <p>Bu masaya ait aktif sipariş bulunmamaktadır.</p>
+            </div>
+          `;
+          document.getElementById('hesap-kapat-btn').disabled = true;
+          return;
+        }
+        
+        // Adisyon bilgisini al
+        adisyonData = await getAdisyon(masaId);
+        
+        if (!adisyonData || adisyonData.urunler.length === 0) {
+          document.getElementById('adisyon-content').innerHTML = `
+            <div class="bos-adisyon">
+              <p>Bu masaya ait sipariş kaydı bulunamadı.</p>
+            </div>
+          `;
+          document.getElementById('hesap-kapat-btn').disabled = true;
+          return;
+        }
+        
+        // Adisyon içeriğini oluştur
+        updateAdisyonUI(adisyonData);
+      } catch (error) {
+        console.error('Adisyon yüklenirken hata:', error);
+        showNotification('Adisyon yüklenirken bir hata oluştu', 'error');
+      }
+    }
+    
+    // Siparişleri dinle
+    function listenToSiparisler() {
+      // Önceki dinleyiciyi kaldır
+      if (siparislerListener) {
+        siparislerListener();
+      }
+      
+      // Yeni dinleyici ekle
+      siparislerListener = siparislerCollection
+        .where('masaId', '==', masaId)
+        .where('durum', 'in', ['beklemede', 'hazirlaniyor', 'hazir', 'teslim_edildi'])
+        .onSnapshot(() => {
+          // Adisyonu yeniden yükle
+          loadAdisyon();
+        }, error => {
+          console.error('Siparişler dinlenirken hata:', error);
+        });
+    }
+    
+    // Adisyon UI'ı güncelle
+    function updateAdisyonUI(adisyon) {
+      // Ürünleri grupla
+      const urunlerGruplanmis = {};
+      
+      adisyon.urunler.forEach(urun => {
+        const key = `${urun.id}-${urun.fiyat}`;
+        
+        if (!urunlerGruplanmis[key]) {
+          urunlerGruplanmis[key] = { ...urun, toplamAdet: 0 };
+        }
+        
+        urunlerGruplanmis[key].toplamAdet += urun.adet;
+      });
+      
+      // HTML oluştur
+      let adisyonHTML = `
+        <table class="adisyon-table">
+          <thead>
+            <tr>
+              <th>Ürün</th>
+              <th>Adet</th>
+              <th>Birim Fiyat</th>
+              <th>Tutar</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      Object.values(urunlerGruplanmis).forEach(urun => {
+        const tutar = urun.fiyat * urun.toplamAdet;
+        
+        adisyonHTML += `
+          <tr>
+            <td>${urun.ad}</td>
+            <td>${urun.toplamAdet}</td>
+            <td>${formatPrice(urun.fiyat)}</td>
+            <td>${formatPrice(tutar)}</td>
+          </tr>
+        `;
+      });
+      
+      adisyonHTML += `
+          </tbody>
+        </table>
+      `;
+      
+      // Toplam
+      adisyonHTML += `
+        <div class="adisyon-total">
+          <div class="adisyon-total-row">
+            <span>Ara Toplam:</span>
+            <span>${formatPrice(adisyon.toplamTutar)}</span>
+          </div>
+          <div class="adisyon-total-row">
+            <span>KDV (%8):</span>
+            <span>${formatPrice(adisyon.toplamTutar * 0.08)}</span>
+          </div>
+          <div class="adisyon-total-row adisyon-grand-total">
+            <span>Genel Toplam:</span>
+            <span>${formatPrice(adisyon.toplamTutar * 1.08)}</span>
+          </div>
+        </div>
+      `;
+      
+      // Siparişleri göster
+      if (adisyon.siparisler && adisyon.siparisler.length > 0) {
+        adisyonHTML += `<div class="siparis-bolumleri no-print">
+          <h3>Siparişler</h3>
+        `;
+        
+        const durumText = {
+          'beklemede': 'Beklemede',
+          'hazirlaniyor': 'Hazırlanıyor',
+          'hazir': 'Hazır',
+          'teslim_edildi': 'Teslim Edildi'
+        };
+        
+        adisyon.siparisler.forEach(siparis => {
+          let urunlerHTML = '';
+          
+          siparis.urunler.forEach(urun => {
+            urunlerHTML += `
+              <div class="adisyon-detay">
+                <span>${urun.ad} x ${urun.adet}</span>
+                <span>${formatPrice(urun.fiyat * urun.adet)}</span>
+              </div>
+            `;
+          });
+          
+          adisyonHTML += `
+            <div class="siparis-bolum">
+              <div class="siparis-baslik">
+                <span>Sipariş #${siparis.id.substring(0, 8)}</span>
+                <span class="siparis-durum durum-${siparis.durum}">${durumText[siparis.durum]}</span>
+              </div>
+              <div class="siparis-urunler">
+                ${urunlerHTML}
+              </div>
+              ${siparis.not ? `<div class="siparis-not"><strong>Not:</strong> ${siparis.not}</div>` : ''}
+            </div>
+          `;
+        });
+        
+        adisyonHTML += `</div>`;
+      }
+      
+      // Adisyon içeriğini güncelle
+      document.getElementById('adisyon-content').innerHTML = adisyonHTML;
+      
+      // Hesap kapatma butonu durumunu güncelle
+      document.getElementById('hesap-kapat-btn').disabled = false;
+    }
+    
+    // Adisyonu yazdır
+    function yazdirAdisyon() {
+      window.print();
+    }
+    
+    // Hesabı kapat
+    function hesapKapat() {
+      if (!adisyonData) {
+        showNotification('Adisyon bilgisi bulunamadı', 'error');
+        return;
+      }
+      
+      // Ödeme modalını göster
+      const odemeModal = document.getElementById('odeme-modal');
+      odemeModal.style.display = 'block';
+      
+      // Toplam tutarı güncelle (KDV dahil)
+      const toplamTutar = adisyonData.toplamTutar * 1.08;
+      document.getElementById('odeme-tutar').textContent = formatPrice(toplamTutar);
+      
+      // Ödenen tutarı ve para üstünü sıfırla
+      document.getElementById('odenen-tutar').value = toplamTutar.toFixed(2);
+      document.getElementById('para-ustu').value = '0,00 ₺';
+    }
+    
+    // Ödeme yöntemini seç
+    function secOdemeYontemi(element, yontem) {
+      // Aktif sınıfını kaldır
+      document.querySelectorAll('.payment-method').forEach(el => {
+        el.classList.remove('active');
+      });
+      
+      // Seçilen elemana aktif sınıfını ekle
+      element.classList.add('active');
+      
+      // Ödeme yöntemini güncelle
+      odemeYontemi = yontem;
+      
+      // Nakit değilse para üstü hesaplamayı gizle
+      const odenenTutarInput = document.getElementById('odenen-tutar');
+      const paraUstuInput = document.getElementById('para-ustu');
+      
+      if (yontem === 'nakit') {
+        odenenTutarInput.disabled = false;
+        paraUstuInput.parentElement.style.display = 'block';
+      } else {
+        odenenTutarInput.disabled = true;
+        paraUstuInput.parentElement.style.display = 'none';
+        
+        // Tam tutarı gir
+        odenenTutarInput.value = (adisyonData.toplamTutar * 1.08).toFixed(2);
+      }
+      
+      // Para üstünü güncelle
+      hesaplaParaUstu();
+    }
+    
+    // Para üstünü hesapla
+    function hesaplaParaUstu() {
+      if (odemeYontemi !== 'nakit') return;
+      
+      const toplamTutar = adisyonData.toplamTutar * 1.08;
+      const odenenTutar = parseFloat(document.getElementById('odenen-tutar').value) || 0;
+      
+      const paraUstu = Math.max(0, odenenTutar - toplamTutar);
+      
+      document.getElementById('para-ustu').value = formatPrice(paraUstu);
+    }
+    
+    // Ödeme işlemini iptal et
+    function iptalOdeme() {
+      document.getElementById('odeme-modal').style.display = 'none';
+    }
+    
+    // Ödeme işlemini tamamla
+    async function tamamlaOdeme() {
+      try {
+        // Adisyonu kapat
+        const success = await kapatAdisyon(masaId);
+        
+        if (success) {
+          // Ödeme modalını kapat
+          document.getElementById('odeme-modal').style.display = 'none';
+          
+          // Bildirim göster
+          showNotification('Hesap başarıyla kapatıldı');
+          
+          // 2 saniye sonra kasa ana sayfasına yönlendir
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 2000);
+        } else {
+          showNotification('Hesap kapatılırken bir hata oluştu', 'error');
+        }
+      } catch (error) {
+        console.error('Hesap kapatılırken hata:', error);
+        showNotification('Hesap kapatılırken bir hata oluştu', 'error');
+      }
+    }
+    
+    // Çıkış yap
+    function logout() {
+      // Dinleyiciyi kaldır
+      if (siparislerListener) {
+        siparislerListener();
+      }
+      
+      firebase.auth().signOut()
+        .then(() => {
+          localStorage.removeItem('userRole');
+          window.location.href = '../index.html';
+        })
+        .catch(error => {
+          console.error('Çıkış hatası:', error);
+          showNotification('Çıkış yapılırken bir hata oluştu', 'error');
+        });
+    }
+  </script>
+</body>
+</html> 

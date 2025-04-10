@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sipariş - Restoran Yönetim Sistemi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-role="garson">
+  <header>
+    <div class="container header-container">
+      <div class="logo">Restoran Yönetim Sistemi</div>
+      <div class="user-info">
+        <span id="user-name">Garson</span>
+        <button class="btn btn-secondary" onclick="logout()">Çıkış</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <a href="index.html" class="btn btn-primary">◀ Geri</a>
+          <h1 id="masa-title">Masa </h1>
+        </div>
+        
+        <div class="form-group">
+          <label for="kategoriler">Kategori Seçin:</label>
+          <select id="kategoriler" onchange="filterMenu()">
+            <option value="tumu">Tümü</option>
+            <option value="yemekler">Yemekler</option>
+            <option value="icecekler">İçecekler</option>
+            <option value="tatlilar">Tatlılar</option>
+          </select>
+        </div>
+        
+        <div id="menu-items" class="menu-grid">
+          <!-- Menü öğeleri buraya dinamik olarak eklenecek -->
+        </div>
+        
+        <div class="siparis-ozeti">
+          <h2>Sipariş Özeti</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Ürün</th>
+                <th>Adet</th>
+                <th>Fiyat</th>
+                <th>Toplam</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="siparis-items">
+              <!-- Sipariş öğeleri buraya dinamik olarak eklenecek -->
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3"><strong>Toplam Tutar:</strong></td>
+                <td id="toplam-tutar">0,00 ₺</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+          
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="siparis-notu">Sipariş Notu:</label>
+            <textarea id="siparis-notu" placeholder="Sipariş için ekstra bilgi veya notlar..."></textarea>
+          </div>
+          
+          <button class="btn btn-accent" onclick="gonderSiparis()" id="gonder-btn">Siparişi Gönder</button>
+        </div>
+      </div>
+      
+      <div class="card" id="aktif-siparisler-card" style="display: none;">
+        <div class="card-header">
+          <h2>Aktif Siparişler</h2>
+        </div>
+        <div id="aktif-siparisler">
+          <!-- Aktif siparişler buraya dinamik olarak eklenecek -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/main.js"></script>
+  <script>
+    // URL'den masa bilgisini al
+    const urlParams = new URLSearchParams(window.location.search);
+    const masaId = urlParams.get('masaId');
+    const masaNo = urlParams.get('masaNo');
+    
+    // Sipariş sepeti
+    let sepet = [];
+    let menuItems = [];
+    
+    // Sayfa yüklendiğinde
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // Kullanıcı oturumunu kontrol et
+        await checkAuth();
+        
+        // Masa başlığını ayarla
+        document.getElementById('masa-title').textContent = `Masa ${masaNo}`;
+        
+        // Menüyü yükle
+        await loadMenu();
+        
+        // Aktif siparişleri yükle
+        await loadAktifSiparisler();
+        
+        // Bildirim dinleyicisini başlat
+        listenForNotifications('garson');
+      } catch (error) {
+        console.error('Hata:', error);
+        window.location.href = '../index.html';
+      }
+    });
+    
+    // Menüyü yükle
+    async function loadMenu() {
+      const menuItemsContainer = document.getElementById('menu-items');
+      menuItemsContainer.innerHTML = '';
+      
+      menuItems = await getMenu();
+      
+      menuItems.forEach(item => {
+        const itemCard = document.createElement('div');
+        itemCard.className = 'card menu-item';
+        itemCard.dataset.kategori = item.kategori;
+        itemCard.innerHTML = `
+          <h3>${item.ad}</h3>
+          <p>${item.aciklama}</p>
+          <div class="menu-item-footer">
+            <span class="fiyat">${formatPrice(item.fiyat)}</span>
+            <button class="btn btn-primary" onclick="addToSepet('${item.id}')">+</button>
+          </div>
+        `;
+        
+        menuItemsContainer.appendChild(itemCard);
+      });
+    }
+    
+    // Menüyü filtrele
+    function filterMenu() {
+      const kategori = document.getElementById('kategoriler').value;
+      const menuItems = document.querySelectorAll('.menu-item');
+      
+      menuItems.forEach(item => {
+        if (kategori === 'tumu' || item.dataset.kategori === kategori) {
+          item.style.display = 'block';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+    
+    // Sepete ürün ekle
+    function addToSepet(itemId) {
+      const item = menuItems.find(m => m.id === itemId);
+      
+      if (!item) {
+        return;
+      }
+      
+      const existingItem = sepet.find(s => s.id === itemId);
+      
+      if (existingItem) {
+        existingItem.adet += 1;
+      } else {
+        sepet.push({
+          id: item.id,
+          ad: item.ad,
+          fiyat: item.fiyat,
+          adet: 1
+        });
+      }
+      
+      updateSepetUI();
+    }
+    
+    // Sepetten ürün kaldır
+    function removeFromSepet(itemId) {
+      const index = sepet.findIndex(s => s.id === itemId);
+      
+      if (index !== -1) {
+        sepet.splice(index, 1);
+        updateSepetUI();
+      }
+    }
+    
+    // Sepet adet güncelle
+    function updateAdet(itemId, adet) {
+      const item = sepet.find(s => s.id === itemId);
+      
+      if (item) {
+        item.adet = Math.max(1, parseInt(adet));
+        updateSepetUI();
+      }
+    }
+    
+    // Sepet UI güncelle
+    function updateSepetUI() {
+      const siparisItems = document.getElementById('siparis-items');
+      siparisItems.innerHTML = '';
+      
+      if (sepet.length === 0) {
+        siparisItems.innerHTML = '<tr><td colspan="5" style="text-align: center;">Sepetinizde ürün bulunmamaktadır.</td></tr>';
+        document.getElementById('gonder-btn').disabled = true;
+      } else {
+        document.getElementById('gonder-btn').disabled = false;
+      }
+      
+      let toplamTutar = 0;
+      
+      sepet.forEach(item => {
+        const itemTotal = item.fiyat * item.adet;
+        toplamTutar += itemTotal;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.ad}</td>
+          <td>
+            <input type="number" min="1" value="${item.adet}" onchange="updateAdet('${item.id}', this.value)" style="width: 50px;">
+          </td>
+          <td>${formatPrice(item.fiyat)}</td>
+          <td>${formatPrice(itemTotal)}</td>
+          <td>
+            <button class="btn btn-secondary" onclick="removeFromSepet('${item.id}')">Sil</button>
+          </td>
+        `;
+        
+        siparisItems.appendChild(row);
+      });
+      
+      document.getElementById('toplam-tutar').textContent = formatPrice(toplamTutar);
+    }
+    
+    // Aktif siparişleri yükle
+    async function loadAktifSiparisler() {
+      const siparisler = await getSiparisByMasaId(masaId);
+      
+      const aktifSiparislerCard = document.getElementById('aktif-siparisler-card');
+      const aktifSiparislerContainer = document.getElementById('aktif-siparisler');
+      
+      if (siparisler.length === 0) {
+        aktifSiparislerCard.style.display = 'none';
+        return;
+      }
+      
+      aktifSiparislerCard.style.display = 'block';
+      aktifSiparislerContainer.innerHTML = '';
+      
+      siparisler.forEach(siparis => {
+        const siparisCard = document.createElement('div');
+        siparisCard.className = `card siparis-card siparis-${siparis.durum}`;
+        
+        let urunlerHTML = '';
+        let toplamTutar = 0;
+        
+        siparis.urunler.forEach(urun => {
+          urunlerHTML += `<div class="adisyon-detay">
+            <span>${urun.ad} x ${urun.adet}</span>
+            <span>${formatPrice(urun.fiyat * urun.adet)}</span>
+          </div>`;
+          
+          toplamTutar += urun.fiyat * urun.adet;
+        });
+        
+        const durumText = {
+          'beklemede': 'Beklemede',
+          'hazirlaniyor': 'Hazırlanıyor',
+          'hazir': 'Hazır',
+          'teslim_edildi': 'Teslim Edildi'
+        };
+        
+        siparisCard.innerHTML = `
+          <div class="card-header">
+            <h3>Sipariş #${siparis.id.substring(0, 8)}</h3>
+            <span class="siparis-durum">${durumText[siparis.durum]}</span>
+          </div>
+          <div class="siparis-urunler">
+            ${urunlerHTML}
+          </div>
+          <div class="toplam-tutar">
+            ${formatPrice(toplamTutar)}
+          </div>
+          ${siparis.not ? `<div class="siparis-not"><strong>Not:</strong> ${siparis.not}</div>` : ''}
+          <div class="siparis-actions">
+            ${siparis.durum === 'hazir' ? 
+              `<button class="btn btn-success" onclick="teslimatYap('${siparis.id}')">Teslim Edildi</button>` : ''}
+          </div>
+        `;
+        
+        aktifSiparislerContainer.appendChild(siparisCard);
+      });
+    }
+    
+    // Siparişi gönder
+    async function gonderSiparis() {
+      if (sepet.length === 0) {
+        showNotification('Sipariş sepeti boş', 'error');
+        return;
+      }
+      
+      const siparisData = {
+        masaId: masaId,
+        masaNumarasi: masaNo,
+        urunler: sepet,
+        not: document.getElementById('siparis-notu').value || ''
+      };
+      
+      // Gönder butonunu devre dışı bırak
+      document.getElementById('gonder-btn').disabled = true;
+      
+      try {
+        // Siparişi oluştur
+        const siparisId = await createSiparis(siparisData);
+        
+        if (siparisId) {
+          showNotification('Sipariş başarıyla gönderildi');
+          
+          // Sepeti temizle
+          sepet = [];
+          updateSepetUI();
+          
+          // Sipariş notunu temizle
+          document.getElementById('siparis-notu').value = '';
+          
+          // Aktif siparişleri yeniden yükle
+          await loadAktifSiparisler();
+        }
+      } catch (error) {
+        console.error('Sipariş gönderilirken hata:', error);
+        showNotification('Sipariş gönderilirken bir hata oluştu', 'error');
+      } finally {
+        // Gönder butonunu tekrar aktif hale getir
+        document.getElementById('gonder-btn').disabled = false;
+      }
+    }
+    
+    // Teslim edildi olarak işaretle
+    async function teslimatYap(siparisId) {
+      try {
+        const success = await updateSiparisDurum(siparisId, 'teslim_edildi');
+        
+        if (success) {
+          showNotification('Sipariş teslim edildi olarak işaretlendi');
+          await loadAktifSiparisler();
+        }
+      } catch (error) {
+        console.error('Teslim işlemi sırasında hata:', error);
+        showNotification('Teslim işlemi sırasında bir hata oluştu', 'error');
+      }
+    }
+    
+    // Çıkış yap
+    function logout() {
+      firebase.auth().signOut()
+        .then(() => {
+          localStorage.removeItem('userRole');
+          window.location.href = '../index.html';
+        })
+        .catch(error => {
+          console.error('Çıkış hatası:', error);
+          showNotification('Çıkış yapılırken bir hata oluştu', 'error');
+        });
+    }
+    
+    // Başlangıçta sepeti güncelle
+    updateSepetUI();
+  </script>
+</body>
+</html> 

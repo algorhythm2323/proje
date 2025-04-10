@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restoran Sistemi - Giriş</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Firebase Config yerine Offline Service'i kullan -->
+    <script src="js/offline-service.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <h1>Restoran Yönetim Sistemi</h1>
+            <h2>Lütfen Rolünüzü Seçin</h2>
+            
+            <div class="role-buttons">
+                <button id="garson" class="role-button">Garson</button>
+                <button id="mutfak" class="role-button">Mutfak</button>
+                <button id="kasa" class="role-button">Kasa</button>
+            </div>
+            
+            <div id="loading-message" class="loading-message" style="display: none;">
+                Giriş yapılıyor...
+            </div>
+            
+            <div id="error-message" class="error-message"></div>
+        </div>
+    </div>
+
+    <script>
+        // Role butonlarına tıklama olayını ekle
+        document.querySelectorAll('.role-button').forEach(button => {
+            button.addEventListener('click', function() {
+                login(this.id);
+            });
+        });
+
+        // Yükleniyor durumunu gösterme/gizleme
+        function showLoading(show) {
+            document.querySelectorAll('.role-button').forEach(btn => {
+                btn.disabled = show;
+            });
+            document.getElementById('loading-message').style.display = show ? 'block' : 'none';
+        }
+
+        // Hata mesajını gösterme
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+            setTimeout(() => {
+                document.getElementById('error-message').textContent = '';
+            }, 5000);
+        }
+
+        // Giriş işlemi
+        function login(role) {
+            showLoading(true);
+            
+            auth.signInAnonymously()
+                .then(userCredential => {
+                    console.log("Başarıyla giriş yapıldı:", userCredential);
+                    
+                    // Oturum bilgilerini sakla
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        uid: userCredential.user.uid,
+                        role: role
+                    }));
+                    
+                    // Yönlendirme
+                    window.location.href = `${role}/index.html`;
+                })
+                .catch(error => {
+                    showLoading(false);
+                    console.error("Giriş hatası:", error);
+                    
+                    // Hata mesajını göster
+                    let errorMessage = "Giriş yapılırken bir hata oluştu.";
+                    
+                    // Hata koduna göre özel mesajlar
+                    if (error.code === 'auth/operation-not-allowed') {
+                        errorMessage = "Anonim giriş etkinleştirilmemiş. Firebase konsolünden etkinleştirin.";
+                    } else if (error.code === 'auth/network-request-failed') {
+                        errorMessage = "Ağ bağlantı hatası. İnternet bağlantınızı kontrol edin.";
+                    }
+                    
+                    showError(errorMessage);
+                });
+        }
+
+        // Sayfa yüklendiğinde oturum kontrolü
+        window.addEventListener('DOMContentLoaded', function() {
+            // LocalStorage'da mevcut oturum var mı kontrol et
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            
+            if (currentUser && currentUser.role) {
+                // Kullanıcı daha önce giriş yapmış, ilgili role yönlendir
+                window.location.href = `${currentUser.role}/index.html`;
+            }
+        });
+    </script>
+</body>
+</html> 
