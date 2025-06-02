@@ -45,6 +45,12 @@ const USERS = {
     role: "mutfak",
     name: "Adem Çelik (Sous Chef)",
   },
+  mutfak4: {
+    email: "ali.chef@restoran.com",
+    password: "chef7890",
+    role: "mutfak",
+    name: "Adem Çelik (Sous Chef)",
+  },
 
   // Kasa Hesapları
   kasa1: {
