@@ -1,102 +1,251 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Restoran Sistemi - Giriş</title>
-    <link rel="stylesheet" href="css/style.css">
-    <!-- Firebase Config yerine Offline Service'i kullan -->
-    <script src="js/offline-service.js"></script>
-</head>
-<body>
+    <link rel="stylesheet" href="css/style.css" />
+    <!-- Credentials dosyasını dahil et -->
+    <script src="js/credentials.js"></script>
+  </head>
+  <body class="login-page">
+    <div class="login-background">
+      <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+      </div>
+    </div>
+
     <div class="container">
-        <div class="login-container">
+      <div class="login-container">
+        <div class="login-header">
+          <div class="logo-section">
+            <div class="logo-icon">🍽️</div>
             <h1>Restoran Yönetim Sistemi</h1>
-            <h2>Lütfen Rolünüzü Seçin</h2>
-            
-            <div class="role-buttons">
-                <button id="garson" class="role-button">Garson</button>
-                <button id="mutfak" class="role-button">Mutfak</button>
-                <button id="kasa" class="role-button">Kasa</button>
-            </div>
-            
-            <div id="loading-message" class="loading-message" style="display: none;">
-                Giriş yapılıyor...
-            </div>
-            
-            <div id="error-message" class="error-message"></div>
+          </div>
+          <p class="login-subtitle">Hesabınıza giriş yapın</p>
         </div>
+
+        <form id="loginForm" class="login-form">
+          <div class="form-group">
+            <label for="email">
+              <span class="label-icon">✉️</span>
+              Email Adresi
+            </label>
+            <div class="input-wrapper">
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                placeholder="ornek@restoran.com"
+                autocomplete="email"
+              />
+              <div class="input-focus-effect"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">
+              <span class="label-icon">🔒</span>
+              Şifre
+            </label>
+            <div class="input-wrapper password-wrapper">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                placeholder="••••••••"
+                autocomplete="current-password"
+              />
+              <button type="button" class="password-toggle" id="passwordToggle">
+                <span class="toggle-text" id="toggleText">Göster</span>
+              </button>
+              <div class="input-focus-effect"></div>
+            </div>
+          </div>
+
+          <button type="submit" id="loginButton" class="login-button">
+            <span class="button-content">
+              <span class="button-text">Giriş Yap</span>
+              <span class="button-icon">→</span>
+            </span>
+            <div class="button-ripple"></div>
+          </button>
+        </form>
+
+        <div id="loading-message" class="loading-message" style="display: none">
+          <div class="loading-animation">
+            <div class="loading-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <span>Giriş yapılıyor...</span>
+          </div>
+        </div>
+
+        <div id="error-message" class="message-container error-message"></div>
+        <div
+          id="success-message"
+          class="message-container success-message"
+        ></div>
+      </div>
     </div>
 
     <script>
-        // Role butonlarına tıklama olayını ekle
-        document.querySelectorAll('.role-button').forEach(button => {
-            button.addEventListener('click', function() {
-                login(this.id);
-            });
+      // Şifre gösterme/gizleme işlevi
+      document
+        .getElementById("passwordToggle")
+        .addEventListener("click", function () {
+          const passwordInput = document.getElementById("password");
+          const toggleText = document.getElementById("toggleText");
+
+          if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            toggleText.textContent = "Gizle";
+            this.classList.add("active");
+          } else {
+            passwordInput.type = "password";
+            toggleText.textContent = "Göster";
+            this.classList.remove("active");
+          }
         });
 
-        // Yükleniyor durumunu gösterme/gizleme
-        function showLoading(show) {
-            document.querySelectorAll('.role-button').forEach(btn => {
-                btn.disabled = show;
-            });
-            document.getElementById('loading-message').style.display = show ? 'block' : 'none';
-        }
+      // Form gönderimi
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
 
-        // Hata mesajını gösterme
-        function showError(message) {
-            document.getElementById('error-message').textContent = message;
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value.trim();
+
+          if (!email || !password) {
+            showError("Lütfen email ve şifre alanlarını doldurunuz.");
+            return;
+          }
+
+          login(email, password);
+        });
+
+      // Yükleniyor durumunu gösterme/gizleme
+      function showLoading(show) {
+        const loginButton = document.getElementById("loginButton");
+        const loadingMessage = document.getElementById("loading-message");
+
+        loginButton.disabled = show;
+        loadingMessage.style.display = show ? "flex" : "none";
+
+        if (show) {
+          loginButton.classList.add("loading");
+        } else {
+          loginButton.classList.remove("loading");
+        }
+      }
+
+      // Hata mesajını gösterme
+      function showError(message) {
+        const errorElement = document.getElementById("error-message");
+        const successElement = document.getElementById("success-message");
+
+        successElement.style.display = "none";
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
+        errorElement.classList.add("shake");
+
+        setTimeout(() => {
+          errorElement.classList.remove("shake");
+        }, 500);
+
+        setTimeout(() => {
+          errorElement.style.display = "none";
+        }, 5000);
+      }
+
+      // Başarı mesajını gösterme
+      function showSuccess(message) {
+        const errorElement = document.getElementById("error-message");
+        const successElement = document.getElementById("success-message");
+
+        errorElement.style.display = "none";
+        successElement.textContent = message;
+        successElement.style.display = "block";
+      }
+
+      // Giriş işlemi
+      function login(email, password) {
+        showLoading(true);
+
+        // Gerçek giriş hissi için gecikme
+        setTimeout(() => {
+          const result = validateLogin(email, password);
+
+          if (result.success) {
+            console.log("Başarıyla giriş yapıldı:", result.user);
+
+            // Oturum bilgilerini sakla
+            saveUserSession(result.user);
+
+            showSuccess(`Hoş geldiniz! Yönlendiriliyorsunuz...`);
+
+            // Kısa bir gecikme sonrası yönlendirme
             setTimeout(() => {
-                document.getElementById('error-message').textContent = '';
-            }, 5000);
-        }
+              window.location.href = `${result.user.role}/index.html`;
+            }, 1200);
+          } else {
+            showLoading(false);
+            showError(result.message);
+          }
+        }, 1000);
+      }
 
-        // Giriş işlemi
-        function login(role) {
-            showLoading(true);
-            
-            auth.signInAnonymously()
-                .then(userCredential => {
-                    console.log("Başarıyla giriş yapıldı:", userCredential);
-                    
-                    // Oturum bilgilerini sakla
-                    localStorage.setItem('currentUser', JSON.stringify({
-                        uid: userCredential.user.uid,
-                        role: role
-                    }));
-                    
-                    // Yönlendirme
-                    window.location.href = `${role}/index.html`;
-                })
-                .catch(error => {
-                    showLoading(false);
-                    console.error("Giriş hatası:", error);
-                    
-                    // Hata mesajını göster
-                    let errorMessage = "Giriş yapılırken bir hata oluştu.";
-                    
-                    // Hata koduna göre özel mesajlar
-                    if (error.code === 'auth/operation-not-allowed') {
-                        errorMessage = "Anonim giriş etkinleştirilmemiş. Firebase konsolünden etkinleştirin.";
-                    } else if (error.code === 'auth/network-request-failed') {
-                        errorMessage = "Ağ bağlantı hatası. İnternet bağlantınızı kontrol edin.";
-                    }
-                    
-                    showError(errorMessage);
-                });
-        }
+      // Sayfa yüklendiğinde oturum kontrolü
+      window.addEventListener("DOMContentLoaded", function () {
+        const currentUser = checkUserSession();
 
-        // Sayfa yüklendiğinde oturum kontrolü
-        window.addEventListener('DOMContentLoaded', function() {
-            // LocalStorage'da mevcut oturum var mı kontrol et
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            
-            if (currentUser && currentUser.role) {
-                // Kullanıcı daha önce giriş yapmış, ilgili role yönlendir
-                window.location.href = `${currentUser.role}/index.html`;
-            }
+        if (currentUser && currentUser.role) {
+          // Kullanıcı daha önce giriş yapmış, ilgili role yönlendir
+          console.log("Mevcut oturum bulundu:", currentUser);
+          showSuccess(`Mevcut oturum bulundu. Yönlendiriliyorsunuz...`);
+
+          setTimeout(() => {
+            window.location.href = `${currentUser.role}/index.html`;
+          }, 1000);
+        }
+      });
+
+      // Enter tuşu ile form gönderimi
+      document.addEventListener("keypress", function (e) {
+        if (
+          e.key === "Enter" &&
+          !document.getElementById("loginButton").disabled
+        ) {
+          document
+            .getElementById("loginForm")
+            .dispatchEvent(new Event("submit"));
+        }
+      });
+
+      // Ripple effect for button
+      document
+        .getElementById("loginButton")
+        .addEventListener("click", function (e) {
+          const ripple = this.querySelector(".button-ripple");
+          const rect = this.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          ripple.style.left = x + "px";
+          ripple.style.top = y + "px";
+          ripple.classList.add("animate");
+
+          setTimeout(() => {
+            ripple.classList.remove("animate");
+          }, 600);
         });
     </script>
-</body>
-</html> 
+  </body>
+</html>

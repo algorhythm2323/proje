@@ -1,319 +1,335 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mutfak Paneli</title>
-  <link rel="stylesheet" href="../css/style.css">
-  <!-- Firebase yerine offline servis kullan -->
-  <script src="../js/offline-service.js"></script>
-  <script src="../js/main.js"></script>
-</head>
-<body>
-  <div class="navbar">
-    <div class="navbar-brand">Restoran Yönetim Sistemi - Mutfak</div>
-    <div class="navbar-menu">
-      <button id="logout-btn" class="btn">Çıkış Yap</button>
-    </div>
-  </div>
-  
-  <div class="app-grid">
-    <div class="sidebar">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Bildirimler</div>
-        </div>
-        <div id="notifications-container"></div>
-      </div>
-      
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Filtreler</div>
-        </div>
-        <div class="form-group">
-          <label for="order-status-filter">Durum Filtresi</label>
-          <select id="order-status-filter">
-            <option value="all">Tümü</option>
-            <option value="beklemede" selected>Bekleyen Siparişler</option>
-            <option value="hazirlaniyor">Hazırlanan Siparişler</option>
-            <option value="hazir">Hazır Siparişler</option>
-          </select>
-        </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mutfak Paneli</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <!-- Firebase yerine offline servis kullan -->
+    <script src="../js/credentials.js"></script>
+    <script src="../js/offline-service.js"></script>
+    <script src="../js/main.js"></script>
+  </head>
+  <body>
+    <div class="navbar">
+      <div class="navbar-brand">Restoran Yönetim Sistemi - Mutfak</div>
+      <div class="navbar-menu">
+        <button id="logout-btn" class="btn">Çıkış Yap</button>
       </div>
     </div>
-    
-    <div class="main-content">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Siparişler</div>
-          <button id="refresh-btn" class="btn">Yenile</button>
-        </div>
-        <div id="orders-container"></div>
-      </div>
-    </div>
-  </div>
 
-  <script>
-    // DOM Element Referansları
-    const ordersContainer = document.getElementById('orders-container');
-    const orderStatusFilter = document.getElementById('order-status-filter');
-    const refreshBtn = document.getElementById('refresh-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const notificationsContainer = document.getElementById('notifications-container');
-    
-    // Uygulama Durumu
-    let allOrders = [];
-    
-    // Sayfa yüklendiğinde
-    document.addEventListener('DOMContentLoaded', function() {
-      // Kullanıcı oturumunu kontrol et
-      checkUserSession();
-      
-      // Siparişleri yükle
-      loadOrders();
-      
-      // Bildirimleri dinle
-      listenForNotifications();
-      
-      // Olay dinleyicileri ekle
-      setupEventListeners();
-    });
-    
-    // Kullanıcı oturumunu kontrol et
-    function checkUserSession() {
-      // LocalStorage'dan kullanıcı bilgilerini al
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      
-      // Kullanıcı yoksa veya mutfak değilse login sayfasına yönlendir
-      if (!currentUser || currentUser.role !== 'mutfak') {
-        window.location.href = '../index.html';
-      }
-    }
-    
-    // Olay dinleyicileri kurulumu
-    function setupEventListeners() {
-      // Sipariş durumu filtresi değişimi
-      orderStatusFilter.addEventListener('change', () => {
-        displayOrders();
-      });
-      
-      // Yenile butonu
-      refreshBtn.addEventListener('click', () => {
+    <div class="app-grid">
+      <div class="sidebar">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Bildirimler</div>
+          </div>
+          <div id="notifications-container"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Filtreler</div>
+          </div>
+          <div class="form-group">
+            <label for="order-status-filter">Durum Filtresi</label>
+            <select id="order-status-filter">
+              <option value="all">Tümü</option>
+              <option value="beklemede" selected>Bekleyen Siparişler</option>
+              <option value="hazirlaniyor">Hazırlanan Siparişler</option>
+              <option value="hazir">Hazır Siparişler</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Siparişler</div>
+            <button id="refresh-btn" class="btn">Yenile</button>
+          </div>
+          <div id="orders-container"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // DOM Element Referansları
+      const ordersContainer = document.getElementById("orders-container");
+      const orderStatusFilter = document.getElementById("order-status-filter");
+      const refreshBtn = document.getElementById("refresh-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+      const notificationsContainer = document.getElementById(
+        "notifications-container"
+      );
+
+      // Uygulama Durumu
+      let allOrders = [];
+
+      // Sayfa yüklendiğinde
+      document.addEventListener("DOMContentLoaded", function () {
+        // Kullanıcı oturumunu kontrol et
+        checkUserSession();
+
+        // Siparişleri yükle
         loadOrders();
+
+        // Bildirimleri dinle
+        listenForNotifications();
+
+        // Olay dinleyicileri ekle
+        setupEventListeners();
       });
-      
-      // Çıkış yapma butonu
-      logoutBtn.addEventListener('click', () => {
-        logout().then(() => {
-          window.location.href = '../index.html';
-        });
-      });
-    }
-    
-    // Siparişleri yükleme
-    function loadOrders() {
-      ordersContainer.innerHTML = '<div class="loading-message">Siparişler yükleniyor...</div>';
-      
-      // Tüm siparişleri al
-      siparislerCollection.get()
-        .then(snapshot => {
-          allOrders = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          
-          // Siparişleri görüntüle
-          displayOrders();
-        })
-        .catch(error => {
-          console.error("Siparişler yüklenirken hata oluştu:", error);
-          ordersContainer.innerHTML = '<div class="notification notification-error">Siparişler yüklenirken bir hata oluştu.</div>';
-        });
-    }
-    
-    // Siparişleri görüntüle
-    function displayOrders() {
-      // Seçilen durum filtresi
-      const selectedStatus = orderStatusFilter.value;
-      
-      // Filtrelenmiş siparişleri al
-      let filteredOrders = allOrders;
-      
-      if (selectedStatus !== 'all') {
-        filteredOrders = allOrders.filter(order => order.durum === selectedStatus);
-      }
-      
-      // Siparişleri masalara göre grupla
-      const groupedOrders = groupOrdersByTable(filteredOrders);
-      
-      // Siparişleri görüntüle
-      displayGroupedOrders(groupedOrders);
-    }
-    
-    // Siparişleri masalara göre grupla
-    function groupOrdersByTable(orders) {
-      const groups = {};
-      
-      orders.forEach(order => {
-        if (!order.masaId) return; // Eğer masaId yoksa atla
-        
-        if (!groups[order.masaId]) {
-          groups[order.masaId] = {
-            masaId: order.masaId,
-            masaNumarasi: order.masaNumarasi || 'Bilinmeyen Masa',
-            siparisler: []
-          };
+
+      // Kullanıcı oturumunu kontrol et
+      function checkUserSession() {
+        // LocalStorage'dan kullanıcı bilgilerini al
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+
+        // Kullanıcı yoksa veya mutfak değilse login sayfasına yönlendir
+        if (!currentUser || currentUser.role !== "mutfak") {
+          window.location.href = "../index.html";
         }
-        
-        groups[order.masaId].siparisler.push(order);
-      });
-      
-      return Object.values(groups);
-    }
-    
-    // Gruplandırılmış siparişleri görüntüle
-    function displayGroupedOrders(groupedOrders) {
-      ordersContainer.innerHTML = '';
-      
-      if (groupedOrders.length === 0) {
-        ordersContainer.innerHTML = '<div class="notification notification-info">Bu durumda sipariş bulunmuyor.</div>';
-        return;
       }
-      
-      groupedOrders.forEach(group => {
-        const masaCard = document.createElement('div');
-        masaCard.className = 'card';
-        masaCard.style.marginBottom = '1rem';
-        
-        let masaHTML = `
+
+      // Olay dinleyicileri kurulumu
+      function setupEventListeners() {
+        // Sipariş durumu filtresi değişimi
+        orderStatusFilter.addEventListener("change", () => {
+          displayOrders();
+        });
+
+        // Yenile butonu
+        refreshBtn.addEventListener("click", () => {
+          loadOrders();
+        });
+
+        // Çıkış yapma butonu
+        logoutBtn.addEventListener("click", () => {
+          logout().then(() => {
+            window.location.href = "../index.html";
+          });
+        });
+      }
+
+      // Siparişleri yükleme
+      function loadOrders() {
+        ordersContainer.innerHTML =
+          '<div class="loading-message">Siparişler yükleniyor...</div>';
+
+        // Tüm siparişleri al
+        siparislerCollection
+          .get()
+          .then((snapshot) => {
+            allOrders = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
+
+            // Siparişleri görüntüle
+            displayOrders();
+          })
+          .catch((error) => {
+            console.error("Siparişler yüklenirken hata oluştu:", error);
+            ordersContainer.innerHTML =
+              '<div class="notification notification-error">Siparişler yüklenirken bir hata oluştu.</div>';
+          });
+      }
+
+      // Siparişleri görüntüle
+      function displayOrders() {
+        // Seçilen durum filtresi
+        const selectedStatus = orderStatusFilter.value;
+
+        // Filtrelenmiş siparişleri al
+        let filteredOrders = allOrders;
+
+        if (selectedStatus !== "all") {
+          filteredOrders = allOrders.filter(
+            (order) => order.durum === selectedStatus
+          );
+        }
+
+        // Siparişleri masalara göre grupla
+        const groupedOrders = groupOrdersByTable(filteredOrders);
+
+        // Siparişleri görüntüle
+        displayGroupedOrders(groupedOrders);
+      }
+
+      // Siparişleri masalara göre grupla
+      function groupOrdersByTable(orders) {
+        const groups = {};
+
+        orders.forEach((order) => {
+          if (!order.masaId) return; // Eğer masaId yoksa atla
+
+          if (!groups[order.masaId]) {
+            groups[order.masaId] = {
+              masaId: order.masaId,
+              masaNumarasi: order.masaNumarasi || "Bilinmeyen Masa",
+              siparisler: [],
+            };
+          }
+
+          groups[order.masaId].siparisler.push(order);
+        });
+
+        return Object.values(groups);
+      }
+
+      // Gruplandırılmış siparişleri görüntüle
+      function displayGroupedOrders(groupedOrders) {
+        ordersContainer.innerHTML = "";
+
+        if (groupedOrders.length === 0) {
+          ordersContainer.innerHTML =
+            '<div class="notification notification-info">Bu durumda sipariş bulunmuyor.</div>';
+          return;
+        }
+
+        groupedOrders.forEach((group) => {
+          const masaCard = document.createElement("div");
+          masaCard.className = "card";
+          masaCard.style.marginBottom = "1rem";
+
+          let masaHTML = `
           <div class="card-header">
             <div class="card-title">Masa ${group.masaNumarasi}</div>
           </div>
           <div class="order-details">
         `;
-        
-        group.siparisler.forEach(siparis => {
-          // Sipariş durumuna göre stil sınıfı
-          let statusClass = '';
-          let statusText = '';
-          
-          switch(siparis.durum) {
-            case 'beklemede':
-              statusClass = 'notification-warning';
-              statusText = 'Beklemede';
-              break;
-            case 'hazirlaniyor':
-              statusClass = 'notification-accent';
-              statusText = 'Hazırlanıyor';
-              break;
-            case 'hazir':
-              statusClass = 'notification-success';
-              statusText = 'Hazır';
-              break;
-            default:
-              statusText = siparis.durum;
-          }
-          
-          masaHTML += `
+
+          group.siparisler.forEach((siparis) => {
+            // Sipariş durumuna göre stil sınıfı
+            let statusClass = "";
+            let statusText = "";
+
+            switch (siparis.durum) {
+              case "beklemede":
+                statusClass = "notification-warning";
+                statusText = "Beklemede";
+                break;
+              case "hazirlaniyor":
+                statusClass = "notification-accent";
+                statusText = "Hazırlanıyor";
+                break;
+              case "hazir":
+                statusClass = "notification-success";
+                statusText = "Hazır";
+                break;
+              default:
+                statusText = siparis.durum;
+            }
+
+            masaHTML += `
             <div class="order-item ${statusClass}">
-              <div class="order-item-name">${siparis.ad} x ${siparis.adet || 1}</div>
+              <div class="order-item-name">${siparis.ad} x ${
+              siparis.adet || 1
+            }</div>
               <div>
                 <span class="order-item-status">${statusText}</span>
                 ${getDurumButtons(siparis)}
               </div>
             </div>
           `;
+          });
+
+          masaHTML += `</div>`;
+          masaCard.innerHTML = masaHTML;
+          ordersContainer.appendChild(masaCard);
         });
-        
-        masaHTML += `</div>`;
-        masaCard.innerHTML = masaHTML;
-        ordersContainer.appendChild(masaCard);
-      });
-    }
-    
-    // Durum butonlarını oluştur
-    function getDurumButtons(siparis) {
-      const durum = siparis.durum;
-      
-      let buttonsHTML = '<div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">';
-      
-      if (durum === 'beklemede') {
-        buttonsHTML += `
+      }
+
+      // Durum butonlarını oluştur
+      function getDurumButtons(siparis) {
+        const durum = siparis.durum;
+
+        let buttonsHTML =
+          '<div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">';
+
+        if (durum === "beklemede") {
+          buttonsHTML += `
           <button class="btn" style="background-color: var(--accent-color);"
             onclick="updateOrderStatus('${siparis.id}', 'hazirlaniyor')">
             Hazırlamaya Başla
           </button>
         `;
-      } else if (durum === 'hazirlaniyor') {
-        buttonsHTML += `
+        } else if (durum === "hazirlaniyor") {
+          buttonsHTML += `
           <button class="btn" style="background-color: var(--success-color);"
             onclick="updateOrderStatus('${siparis.id}', 'hazir')">
             Hazır
           </button>
         `;
+        }
+
+        buttonsHTML += "</div>";
+        return buttonsHTML;
       }
-      
-      buttonsHTML += '</div>';
-      return buttonsHTML;
-    }
-    
-    // Sipariş durumunu güncelle
-    function updateOrderStatus(orderId, newStatus) {
-      // Siparişi bul
-      const order = allOrders.find(o => o.id === orderId);
-      if (!order) return;
-      
-      // Durumu güncelle
-      siparislerCollection.doc(orderId).update({
-        durum: newStatus
-      }).then(() => {
-        // Siparişi güncelle
-        order.durum = newStatus;
-        
-        // Eğer sipariş hazırsa garsona bildirim gönder
-        if (newStatus === 'hazir') {
-          // Mutfaktan garsona bildirim gönder
-          realdb.ref('bildirimler/garson').push({
-            tip: 'siparis_hazir',
-            masaId: order.masaId,
-            masaNumarasi: order.masaNumarasi,
-            zaman: ServerValue.TIMESTAMP
+
+      // Sipariş durumunu güncelle
+      function updateOrderStatus(orderId, newStatus) {
+        // Siparişi bul
+        const order = allOrders.find((o) => o.id === orderId);
+        if (!order) return;
+
+        // Durumu güncelle
+        siparislerCollection
+          .doc(orderId)
+          .update({
+            durum: newStatus,
+          })
+          .then(() => {
+            // Siparişi güncelle
+            order.durum = newStatus;
+
+            // Eğer sipariş hazırsa garsona bildirim gönder
+            if (newStatus === "hazir") {
+              // Mutfaktan garsona bildirim gönder
+              realdb.ref("bildirimler/garson").push({
+                tip: "siparis_hazir",
+                masaId: order.masaId,
+                masaNumarasi: order.masaNumarasi,
+                zaman: ServerValue.TIMESTAMP,
+              });
+            }
+
+            // Görünümü güncelle
+            displayOrders();
+          })
+          .catch((error) => {
+            console.error("Sipariş durumu güncellenirken hata oluştu:", error);
+            alert("Sipariş durumu güncellenirken bir hata oluştu");
           });
-        }
-        
-        // Görünümü güncelle
-        displayOrders();
-      }).catch(error => {
-        console.error("Sipariş durumu güncellenirken hata oluştu:", error);
-        alert('Sipariş durumu güncellenirken bir hata oluştu');
-      });
-    }
-    
-    // Bildirimleri dinle
-    function listenForNotifications() {
-      realdb.ref('bildirimler/mutfak').on('child_added', snapshot => {
-        const notification = snapshot.val();
-        
-        // Bildirimi görüntüle
-        const notificationElement = document.createElement('div');
-        notificationElement.className = 'notification notification-warning';
-        
-        if (notification.tip === 'yeni_siparis') {
-          notificationElement.textContent = `Masa ${notification.masaNumarasi} için yeni sipariş geldi!`;
-          
-          // Yeni sipariş geldiğinde siparişleri yenile
-          loadOrders();
-        }
-        
-        notificationsContainer.prepend(notificationElement);
-        
-        // Bildirimi 10 saniye sonra kaldır
-        setTimeout(() => {
-          notificationElement.remove();
-          snapshot.ref.remove();
-        }, 10000);
-      });
-    }
-  </script>
-</body>
-</html> 
+      }
+
+      // Bildirimleri dinle
+      function listenForNotifications() {
+        realdb.ref("bildirimler/mutfak").on("child_added", (snapshot) => {
+          const notification = snapshot.val();
+
+          // Bildirimi görüntüle
+          const notificationElement = document.createElement("div");
+          notificationElement.className = "notification notification-warning";
+
+          if (notification.tip === "yeni_siparis") {
+            notificationElement.textContent = `Masa ${notification.masaNumarasi} için yeni sipariş geldi!`;
+
+            // Yeni sipariş geldiğinde siparişleri yenile
+            loadOrders();
+          }
+
+          notificationsContainer.prepend(notificationElement);
+
+          // Bildirimi 10 saniye sonra kaldır
+          setTimeout(() => {
+            notificationElement.remove();
+            snapshot.ref.remove();
+          }, 10000);
+        });
+      }
+    </script>
+  </body>
+</html>

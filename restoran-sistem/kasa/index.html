@@ -1,984 +1,1183 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kasa Paneli</title>
-  <link rel="stylesheet" href="../css/style.css">
-  <!-- Firebase yerine offline servis kullan -->
-  <script src="../js/offline-service.js"></script>
-  <script src="../js/main.js"></script>
-</head>
-<body>
-  <div class="navbar">
-    <div class="navbar-brand">Restoran Yönetim Sistemi - Kasa</div>
-    <div class="navbar-menu">
-      <button id="manage-menu-btn" class="btn btn-small">Menü Yönetimi</button>
-      <button id="manage-tables-btn" class="btn btn-small">Masa Yönetimi</button>
-      <button id="logout-btn" class="btn">Çıkış Yap</button>
-    </div>
-  </div>
-  
-  <div class="app-grid">
-    <div class="sidebar">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Bildirimler</div>
-        </div>
-        <div id="notifications-container"></div>
-      </div>
-      
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Günlük Özet</div>
-        </div>
-        <div class="form-group">
-          <div class="order-item">
-            <div>Toplam Siparişler:</div>
-            <div id="total-orders">0</div>
-          </div>
-          <div class="order-item">
-            <div>Toplam Ciro:</div>
-            <div id="total-revenue">0.00 TL</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Satılan Ürünler</div>
-          <button id="show-products-btn" class="btn btn-small">Göster</button>
-        </div>
-        <div id="sold-products-container" style="display: none;"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kasa Paneli</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <!-- Firebase yerine offline servis kullan -->
+    <script src="../js/credentials.js"></script>
+    <script src="../js/offline-service.js"></script>
+    <script src="../js/main.js"></script>
+  </head>
+  <body>
+    <div class="navbar">
+      <div class="navbar-brand">Restoran Yönetim Sistemi - Kasa</div>
+      <div class="navbar-menu">
+        <button id="manage-menu-btn" class="btn btn-small">
+          Menü Yönetimi
+        </button>
+        <button id="manage-tables-btn" class="btn btn-small">
+          Masa Yönetimi
+        </button>
+        <button id="logout-btn" class="btn">Çıkış Yap</button>
       </div>
     </div>
-    
-    <div class="main-content">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Hesap Bekleyen Masalar</div>
-          <button id="refresh-btn" class="btn">Yenile</button>
-        </div>
-        <div id="tables-container" class="tables-grid"></div>
-      </div>
-      
-      <div id="active-table-container" style="display: none;">
+
+    <div class="app-grid">
+      <div class="sidebar">
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Masa <span id="selected-table-number"></span> Hesabı</div>
-            <button id="close-table-btn" class="btn">Kapat</button>
+            <div class="card-title">Bildirimler</div>
           </div>
-          
-          <div id="table-content">
-            <div id="order-details" class="order-details"></div>
-            
-            <div class="order-total" id="order-total-container">
-              <div class="order-total-label">Toplam:</div>
-              <div class="order-total-price" id="order-total">0.00 TL</div>
+          <div id="notifications-container"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Günlük Özet</div>
+          </div>
+          <div class="form-group">
+            <div class="order-item">
+              <div>Toplam Siparişler:</div>
+              <div id="total-orders">0</div>
             </div>
-            
-            <div style="margin-top: 1rem;">
-              <button id="complete-payment-btn" class="btn" style="background-color: var(--success-color);">Ödeme Tamamlandı</button>
+            <div class="order-item">
+              <div>Toplam Ciro:</div>
+              <div id="total-revenue">0.00 TL</div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <!-- Menü Yönetim Paneli -->
-      <div id="menu-management-container" style="display: none;">
+
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Menü Yönetimi</div>
-            <button id="close-menu-management-btn" class="btn">Kapat</button>
+            <div class="card-title">Satılan Ürünler</div>
+            <button id="show-products-btn" class="btn btn-small">Göster</button>
           </div>
-          
-          <div class="form-group">
-            <button id="add-menu-item-btn" class="btn" style="margin-bottom: 1rem;">Yeni Ürün Ekle</button>
+          <div id="sold-products-container" style="display: none"></div>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Hesap Bekleyen Masalar</div>
+            <button id="refresh-btn" class="btn">Yenile</button>
           </div>
-          
-          <div class="form-group">
-            <label for="menu-category-filter">Kategori Filtrele</label>
-            <select id="menu-category-filter">
-              <option value="all">Tümü</option>
-              <option value="yemekler">Yemekler</option>
-              <option value="icecekler">İçecekler</option>
-              <option value="tatlilar">Tatlılar</option>
-            </select>
-          </div>
-          
-          <div id="menu-management-items" class="menu-management-grid"></div>
-          
-          <!-- Yeni ürün/düzenleme formu -->
-          <div id="menu-item-form" style="display: none; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-            <div class="form-group">
-              <label for="menu-item-name">Ürün Adı</label>
-              <input type="text" id="menu-item-name" placeholder="Ürün adı" required>
+          <div id="tables-container" class="tables-grid"></div>
+        </div>
+
+        <div id="active-table-container" style="display: none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                Masa <span id="selected-table-number"></span> Hesabı
+              </div>
+              <button id="close-table-btn" class="btn">Kapat</button>
             </div>
-            
-            <div class="form-group">
-              <label for="menu-item-price">Fiyat (TL)</label>
-              <input type="number" id="menu-item-price" placeholder="0.00" min="0" step="0.01" required>
+
+            <div id="table-content">
+              <div id="order-details" class="order-details"></div>
+
+              <div class="order-total" id="order-total-container">
+                <div class="order-total-label">Toplam:</div>
+                <div class="order-total-price" id="order-total">0.00 TL</div>
+              </div>
+
+              <div style="margin-top: 1rem">
+                <button
+                  id="complete-payment-btn"
+                  class="btn"
+                  style="background-color: var(--success-color)"
+                >
+                  Ödeme Tamamlandı
+                </button>
+              </div>
             </div>
-            
+          </div>
+        </div>
+
+        <!-- Menü Yönetim Paneli -->
+        <div id="menu-management-container" style="display: none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Menü Yönetimi</div>
+              <button id="close-menu-management-btn" class="btn">Kapat</button>
+            </div>
+
             <div class="form-group">
-              <label for="menu-item-category">Kategori</label>
-              <select id="menu-item-category" required>
+              <button
+                id="add-menu-item-btn"
+                class="btn"
+                style="margin-bottom: 1rem"
+              >
+                Yeni Ürün Ekle
+              </button>
+            </div>
+
+            <div class="form-group">
+              <label for="menu-category-filter">Kategori Filtrele</label>
+              <select id="menu-category-filter">
+                <option value="all">Tümü</option>
                 <option value="yemekler">Yemekler</option>
                 <option value="icecekler">İçecekler</option>
                 <option value="tatlilar">Tatlılar</option>
               </select>
             </div>
-            
-            <div class="form-group">
-              <label for="menu-item-description">Açıklama</label>
-              <textarea id="menu-item-description" placeholder="Ürün açıklaması" rows="3"></textarea>
-            </div>
-            
-            <div style="display: flex; gap: 1rem;">
-              <button id="save-menu-item-btn" class="btn" style="background-color: var(--success-color);">Kaydet</button>
-              <button id="cancel-menu-item-btn" class="btn">İptal</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Masa Yönetim Paneli -->
-      <div id="table-management-container" style="display: none;">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Masa Yönetimi</div>
-            <button id="close-table-management-btn" class="btn">Kapat</button>
-          </div>
-          
-          <div class="form-group">
-            <label for="table-count">Toplam Masa Sayısı</label>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-              <input type="number" id="table-count" min="1" value="10" style="flex: 1;">
-              <button id="update-table-count-btn" class="btn" style="background-color: var(--success-color);">Güncelle</button>
-            </div>
-            <p class="text-small" style="margin-top: 0.5rem;">Not: Masa sayısını değiştirmek mevcut siparişleri etkilemez, ancak masa sayısını azaltırsanız yüksek numaralı masalara erişemeyebilirsiniz.</p>
-          </div>
-          
-          <div id="table-management-items" class="tables-grid" style="margin-top: 1rem;"></div>
-        </div>
-      </div>
-      
-      <!-- Ciro Raporu Paneli -->
-      <div id="revenue-report-container" style="display: none;">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Ciro Raporu</div>
-            <button id="close-revenue-report-btn" class="btn">Kapat</button>
-          </div>
-          
-          <div class="form-group">
-            <div class="order-total" style="margin-bottom: 1rem;">
-              <div class="order-total-label">Toplam Ciro:</div>
-              <div class="order-total-price" id="total-revenue-amount">0.00 TL</div>
-            </div>
-            
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">Satılan Ürünler Detayı</div>
+
+            <div id="menu-management-items" class="menu-management-grid"></div>
+
+            <!-- Yeni ürün/düzenleme formu -->
+            <div
+              id="menu-item-form"
+              style="
+                display: none;
+                margin-top: 1rem;
+                border-top: 1px solid var(--border-color);
+                padding-top: 1rem;
+              "
+            >
+              <div class="form-group">
+                <label for="menu-item-name">Ürün Adı</label>
+                <input
+                  type="text"
+                  id="menu-item-name"
+                  placeholder="Ürün adı"
+                  required
+                />
               </div>
-              <div id="revenue-products-container"></div>
+
+              <div class="form-group">
+                <label for="menu-item-price">Fiyat (TL)</label>
+                <input
+                  type="number"
+                  id="menu-item-price"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="menu-item-category">Kategori</label>
+                <select id="menu-item-category" required>
+                  <option value="yemekler">Yemekler</option>
+                  <option value="icecekler">İçecekler</option>
+                  <option value="tatlilar">Tatlılar</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="menu-item-description">Açıklama</label>
+                <textarea
+                  id="menu-item-description"
+                  placeholder="Ürün açıklaması"
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <div style="display: flex; gap: 1rem">
+                <button
+                  id="save-menu-item-btn"
+                  class="btn"
+                  style="background-color: var(--success-color)"
+                >
+                  Kaydet
+                </button>
+                <button id="cancel-menu-item-btn" class="btn">İptal</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Masa Yönetim Paneli -->
+        <div id="table-management-container" style="display: none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Masa Yönetimi</div>
+              <button id="close-table-management-btn" class="btn">Kapat</button>
+            </div>
+
+            <div class="form-group">
+              <label for="table-count">Toplam Masa Sayısı</label>
+              <div style="display: flex; gap: 1rem; align-items: center">
+                <input
+                  type="number"
+                  id="table-count"
+                  min="1"
+                  value="10"
+                  style="flex: 1"
+                />
+                <button
+                  id="update-table-count-btn"
+                  class="btn"
+                  style="background-color: var(--success-color)"
+                >
+                  Güncelle
+                </button>
+              </div>
+              <p class="text-small" style="margin-top: 0.5rem">
+                Not: Masa sayısını değiştirmek mevcut siparişleri etkilemez,
+                ancak masa sayısını azaltırsanız yüksek numaralı masalara
+                erişemeyebilirsiniz.
+              </p>
+            </div>
+
+            <div
+              id="table-management-items"
+              class="tables-grid"
+              style="margin-top: 1rem"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Ciro Raporu Paneli -->
+        <div id="revenue-report-container" style="display: none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Ciro Raporu</div>
+              <button id="close-revenue-report-btn" class="btn">Kapat</button>
+            </div>
+
+            <div class="form-group">
+              <div class="order-total" style="margin-bottom: 1rem">
+                <div class="order-total-label">Toplam Ciro:</div>
+                <div class="order-total-price" id="total-revenue-amount">
+                  0.00 TL
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">Satılan Ürünler Detayı</div>
+                </div>
+                <div id="revenue-products-container"></div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    // DOM Element Referansları
-    const tablesContainer = document.getElementById('tables-container');
-    const activeTableContainer = document.getElementById('active-table-container');
-    const selectedTableNumber = document.getElementById('selected-table-number');
-    const orderDetails = document.getElementById('order-details');
-    const orderTotal = document.getElementById('order-total');
-    const totalOrders = document.getElementById('total-orders');
-    const totalRevenue = document.getElementById('total-revenue');
-    const notificationsContainer = document.getElementById('notifications-container');
-    const soldProductsContainer = document.getElementById('sold-products-container');
-    
-    // Menü Yönetimi
-    const menuManagementContainer = document.getElementById('menu-management-container');
-    const menuManagementItems = document.getElementById('menu-management-items');
-    const menuCategoryFilter = document.getElementById('menu-category-filter');
-    const menuItemForm = document.getElementById('menu-item-form');
-    const menuItemName = document.getElementById('menu-item-name');
-    const menuItemPrice = document.getElementById('menu-item-price');
-    const menuItemCategory = document.getElementById('menu-item-category');
-    const menuItemDescription = document.getElementById('menu-item-description');
-    
-    // Masa Yönetimi
-    const tableManagementContainer = document.getElementById('table-management-container');
-    const tableManagementItems = document.getElementById('table-management-items');
-    const tableCount = document.getElementById('table-count');
-    
-    // Ciro Raporu
-    const revenueReportContainer = document.getElementById('revenue-report-container');
-    const totalRevenueAmount = document.getElementById('total-revenue-amount');
-    const revenueProductsContainer = document.getElementById('revenue-products-container');
-    
-    // Buton Referansları
-    const closeTableBtn = document.getElementById('close-table-btn');
-    const completePaymentBtn = document.getElementById('complete-payment-btn');
-    const refreshBtn = document.getElementById('refresh-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const showProductsBtn = document.getElementById('show-products-btn');
-    
-    // Menü Yönetimi Butonları
-    const manageMenuBtn = document.getElementById('manage-menu-btn');
-    const closeMenuManagementBtn = document.getElementById('close-menu-management-btn');
-    const addMenuItemBtn = document.getElementById('add-menu-item-btn');
-    const saveMenuItemBtn = document.getElementById('save-menu-item-btn');
-    const cancelMenuItemBtn = document.getElementById('cancel-menu-item-btn');
-    
-    // Masa Yönetimi Butonları
-    const manageTablesBtn = document.getElementById('manage-tables-btn');
-    const closeTableManagementBtn = document.getElementById('close-table-management-btn');
-    const updateTableCountBtn = document.getElementById('update-table-count-btn');
-    
-    // Ciro Raporu Butonları
-    const closeRevenueReportBtn = document.getElementById('close-revenue-report-btn');
-    
-    // Uygulama Durumu
-    let activeTableId = null;
-    let waitingTables = [];
-    let tableOrders = {};
-    let dailyStats = {
-      totalOrders: 0,
-      totalRevenue: 0
-    };
-    let editingMenuItemId = null;
-    
-    // Sayfa yüklendiğinde
-    document.addEventListener('DOMContentLoaded', function() {
-      // Kullanıcı oturumunu kontrol et
-      checkUserSession();
-      
-      // Masaları ve günlük istatistikleri yükle
-      loadWaitingTables();
-      loadDailyStats();
-      
-      // Bildirimleri dinle
-      listenForNotifications();
-      
-      // Olay dinleyicileri ekle
-      setupEventListeners();
-    });
-    
-    // Kullanıcı oturumunu kontrol et
-    function checkUserSession() {
-      // LocalStorage'dan kullanıcı bilgilerini al
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      
-      // Kullanıcı yoksa veya kasa değilse login sayfasına yönlendir
-      if (!currentUser || currentUser.role !== 'kasa') {
-        window.location.href = '../index.html';
-      }
-    }
-    
-    // Olay dinleyicileri kurulumu
-    function setupEventListeners() {
-      // Masa kapatma butonu
-      closeTableBtn.addEventListener('click', () => {
-        activeTableContainer.style.display = 'none';
-        activeTableId = null;
-      });
-      
-      // Ödeme tamamlandı butonu
-      completePaymentBtn.addEventListener('click', completePayment);
-      
-      // Yenile butonu
-      refreshBtn.addEventListener('click', () => {
+    <script>
+      // DOM Element Referansları
+      const tablesContainer = document.getElementById("tables-container");
+      const activeTableContainer = document.getElementById(
+        "active-table-container"
+      );
+      const selectedTableNumber = document.getElementById(
+        "selected-table-number"
+      );
+      const orderDetails = document.getElementById("order-details");
+      const orderTotal = document.getElementById("order-total");
+      const totalOrders = document.getElementById("total-orders");
+      const totalRevenue = document.getElementById("total-revenue");
+      const notificationsContainer = document.getElementById(
+        "notifications-container"
+      );
+      const soldProductsContainer = document.getElementById(
+        "sold-products-container"
+      );
+
+      // Menü Yönetimi
+      const menuManagementContainer = document.getElementById(
+        "menu-management-container"
+      );
+      const menuManagementItems = document.getElementById(
+        "menu-management-items"
+      );
+      const menuCategoryFilter = document.getElementById(
+        "menu-category-filter"
+      );
+      const menuItemForm = document.getElementById("menu-item-form");
+      const menuItemName = document.getElementById("menu-item-name");
+      const menuItemPrice = document.getElementById("menu-item-price");
+      const menuItemCategory = document.getElementById("menu-item-category");
+      const menuItemDescription = document.getElementById(
+        "menu-item-description"
+      );
+
+      // Masa Yönetimi
+      const tableManagementContainer = document.getElementById(
+        "table-management-container"
+      );
+      const tableManagementItems = document.getElementById(
+        "table-management-items"
+      );
+      const tableCount = document.getElementById("table-count");
+
+      // Ciro Raporu
+      const revenueReportContainer = document.getElementById(
+        "revenue-report-container"
+      );
+      const totalRevenueAmount = document.getElementById(
+        "total-revenue-amount"
+      );
+      const revenueProductsContainer = document.getElementById(
+        "revenue-products-container"
+      );
+
+      // Buton Referansları
+      const closeTableBtn = document.getElementById("close-table-btn");
+      const completePaymentBtn = document.getElementById(
+        "complete-payment-btn"
+      );
+      const refreshBtn = document.getElementById("refresh-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+      const showProductsBtn = document.getElementById("show-products-btn");
+
+      // Menü Yönetimi Butonları
+      const manageMenuBtn = document.getElementById("manage-menu-btn");
+      const closeMenuManagementBtn = document.getElementById(
+        "close-menu-management-btn"
+      );
+      const addMenuItemBtn = document.getElementById("add-menu-item-btn");
+      const saveMenuItemBtn = document.getElementById("save-menu-item-btn");
+      const cancelMenuItemBtn = document.getElementById("cancel-menu-item-btn");
+
+      // Masa Yönetimi Butonları
+      const manageTablesBtn = document.getElementById("manage-tables-btn");
+      const closeTableManagementBtn = document.getElementById(
+        "close-table-management-btn"
+      );
+      const updateTableCountBtn = document.getElementById(
+        "update-table-count-btn"
+      );
+
+      // Ciro Raporu Butonları
+      const closeRevenueReportBtn = document.getElementById(
+        "close-revenue-report-btn"
+      );
+
+      // Uygulama Durumu
+      let activeTableId = null;
+      let waitingTables = [];
+      let tableOrders = {};
+      let dailyStats = {
+        totalOrders: 0,
+        totalRevenue: 0,
+      };
+      let editingMenuItemId = null;
+
+      // Sayfa yüklendiğinde
+      document.addEventListener("DOMContentLoaded", function () {
+        // Kullanıcı oturumunu kontrol et
+        checkUserSession();
+
+        // Masaları ve günlük istatistikleri yükle
         loadWaitingTables();
         loadDailyStats();
+
+        // Bildirimleri dinle
+        listenForNotifications();
+
+        // Olay dinleyicileri ekle
+        setupEventListeners();
       });
-      
-      // Çıkış yapma butonu
-      logoutBtn.addEventListener('click', () => {
-        logout().then(() => {
-          window.location.href = '../index.html';
-        });
-      });
-      
-      // Satılan ürünleri göster/gizle butonu
-      showProductsBtn.addEventListener('click', () => {
-        if (soldProductsContainer.style.display === 'none') {
-          soldProductsContainer.style.display = 'block';
-          showProductsBtn.textContent = 'Gizle';
-          loadSoldProducts();
-        } else {
-          soldProductsContainer.style.display = 'none';
-          showProductsBtn.textContent = 'Göster';
+
+      // Kullanıcı oturumunu kontrol et
+      function checkUserSession() {
+        // LocalStorage'dan kullanıcı bilgilerini al
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+
+        // Kullanıcı yoksa veya kasa değilse login sayfasına yönlendir
+        if (!currentUser || currentUser.role !== "kasa") {
+          window.location.href = "../index.html";
         }
-      });
-      
-      // Menü Yönetimi butonları
-      manageMenuBtn.addEventListener('click', () => {
-        // Diğer panelleri kapat
-        activeTableContainer.style.display = 'none';
-        tableManagementContainer.style.display = 'none';
-        revenueReportContainer.style.display = 'none';
-        
-        // Menü yönetimi panelini aç
-        menuManagementContainer.style.display = 'block';
-        loadMenuManagement();
-      });
-      
-      closeMenuManagementBtn.addEventListener('click', () => {
-        menuManagementContainer.style.display = 'none';
-        menuItemForm.style.display = 'none';
-        resetMenuItemForm();
-      });
-      
-      menuCategoryFilter.addEventListener('change', () => {
-        loadMenuManagement();
-      });
-      
-      addMenuItemBtn.addEventListener('click', () => {
-        resetMenuItemForm();
-        menuItemForm.style.display = 'block';
-        editingMenuItemId = null;
-      });
-      
-      saveMenuItemBtn.addEventListener('click', saveMenuItem);
-      
-      cancelMenuItemBtn.addEventListener('click', () => {
-        menuItemForm.style.display = 'none';
-        resetMenuItemForm();
-      });
-      
-      // Masa Yönetimi butonları
-      manageTablesBtn.addEventListener('click', () => {
-        // Diğer panelleri kapat
-        activeTableContainer.style.display = 'none';
-        menuManagementContainer.style.display = 'none';
-        revenueReportContainer.style.display = 'none';
-        
-        // Masa sayısını yükle
-        masalarCollection.get().then(snapshot => {
-          tableCount.value = snapshot.docs.length;
-          loadTableManagement();
+      }
+
+      // Olay dinleyicileri kurulumu
+      function setupEventListeners() {
+        // Masa kapatma butonu
+        closeTableBtn.addEventListener("click", () => {
+          activeTableContainer.style.display = "none";
+          activeTableId = null;
         });
-        
-        // Masa yönetimi panelini aç
-        tableManagementContainer.style.display = 'block';
-      });
-      
-      closeTableManagementBtn.addEventListener('click', () => {
-        tableManagementContainer.style.display = 'none';
-      });
-      
-      updateTableCountBtn.addEventListener('click', updateTableCount);
-      
-      // Ciro Raporu butonları
-      closeRevenueReportBtn.addEventListener('click', () => {
-        revenueReportContainer.style.display = 'none';
-      });
-    }
-    
-    // Bekleyen masaları yükle
-    function loadWaitingTables() {
-      tablesContainer.innerHTML = '<div class="loading-message">Masalar yükleniyor...</div>';
-      
-      masalarCollection.where('durum', '==', 'beklemede')
-        .get()
-        .then(snapshot => {
-          tablesContainer.innerHTML = '';
-          waitingTables = [];
-          
-          if (snapshot.docs.length === 0) {
-            tablesContainer.innerHTML = '<div class="notification notification-info">Hesap bekleyen masa bulunmuyor.</div>';
-            return;
+
+        // Ödeme tamamlandı butonu
+        completePaymentBtn.addEventListener("click", completePayment);
+
+        // Yenile butonu
+        refreshBtn.addEventListener("click", () => {
+          loadWaitingTables();
+          loadDailyStats();
+        });
+
+        // Çıkış yapma butonu
+        logoutBtn.addEventListener("click", () => {
+          logout().then(() => {
+            window.location.href = "../index.html";
+          });
+        });
+
+        // Satılan ürünleri göster/gizle butonu
+        showProductsBtn.addEventListener("click", () => {
+          if (soldProductsContainer.style.display === "none") {
+            soldProductsContainer.style.display = "block";
+            showProductsBtn.textContent = "Gizle";
+            loadSoldProducts();
+          } else {
+            soldProductsContainer.style.display = "none";
+            showProductsBtn.textContent = "Göster";
           }
-          
-          snapshot.docs.forEach(doc => {
-            const tableData = doc.data();
-            waitingTables.push({
-              id: doc.id,
-              ...tableData
-            });
-            
-            const tableItem = document.createElement('div');
-            tableItem.className = 'table-item beklemede';
-            tableItem.innerHTML = `
+        });
+
+        // Menü Yönetimi butonları
+        manageMenuBtn.addEventListener("click", () => {
+          // Diğer panelleri kapat
+          activeTableContainer.style.display = "none";
+          tableManagementContainer.style.display = "none";
+          revenueReportContainer.style.display = "none";
+
+          // Menü yönetimi panelini aç
+          menuManagementContainer.style.display = "block";
+          loadMenuManagement();
+        });
+
+        closeMenuManagementBtn.addEventListener("click", () => {
+          menuManagementContainer.style.display = "none";
+          menuItemForm.style.display = "none";
+          resetMenuItemForm();
+        });
+
+        menuCategoryFilter.addEventListener("change", () => {
+          loadMenuManagement();
+        });
+
+        addMenuItemBtn.addEventListener("click", () => {
+          resetMenuItemForm();
+          menuItemForm.style.display = "block";
+          editingMenuItemId = null;
+        });
+
+        saveMenuItemBtn.addEventListener("click", saveMenuItem);
+
+        cancelMenuItemBtn.addEventListener("click", () => {
+          menuItemForm.style.display = "none";
+          resetMenuItemForm();
+        });
+
+        // Masa Yönetimi butonları
+        manageTablesBtn.addEventListener("click", () => {
+          // Diğer panelleri kapat
+          activeTableContainer.style.display = "none";
+          menuManagementContainer.style.display = "none";
+          revenueReportContainer.style.display = "none";
+
+          // Masa sayısını yükle
+          masalarCollection.get().then((snapshot) => {
+            tableCount.value = snapshot.docs.length;
+            loadTableManagement();
+          });
+
+          // Masa yönetimi panelini aç
+          tableManagementContainer.style.display = "block";
+        });
+
+        closeTableManagementBtn.addEventListener("click", () => {
+          tableManagementContainer.style.display = "none";
+        });
+
+        updateTableCountBtn.addEventListener("click", updateTableCount);
+
+        // Ciro Raporu butonları
+        closeRevenueReportBtn.addEventListener("click", () => {
+          revenueReportContainer.style.display = "none";
+        });
+      }
+
+      // Bekleyen masaları yükle
+      function loadWaitingTables() {
+        tablesContainer.innerHTML =
+          '<div class="loading-message">Masalar yükleniyor...</div>';
+
+        masalarCollection
+          .where("durum", "==", "beklemede")
+          .get()
+          .then((snapshot) => {
+            tablesContainer.innerHTML = "";
+            waitingTables = [];
+
+            if (snapshot.docs.length === 0) {
+              tablesContainer.innerHTML =
+                '<div class="notification notification-info">Hesap bekleyen masa bulunmuyor.</div>';
+              return;
+            }
+
+            snapshot.docs.forEach((doc) => {
+              const tableData = doc.data();
+              waitingTables.push({
+                id: doc.id,
+                ...tableData,
+              });
+
+              const tableItem = document.createElement("div");
+              tableItem.className = "table-item beklemede";
+              tableItem.innerHTML = `
               <div class="table-number">${tableData.masaNumarasi}</div>
               <div class="table-status">Hesap Bekliyor</div>
             `;
-            
-            tableItem.addEventListener('click', () => selectTable(doc.id, tableData));
-            tablesContainer.appendChild(tableItem);
-          });
-        })
-        .catch(error => {
-          console.error("Masalar yüklenirken hata oluştu:", error);
-          tablesContainer.innerHTML = '<div class="notification notification-error">Masalar yüklenirken bir hata oluştu.</div>';
-        });
-    }
-    
-    // Günlük istatistikleri yükle
-    function loadDailyStats() {
-      // Tamamlanmış siparişlerin toplamını ve cirosunu hesapla
-      ciroCollection.get()
-        .then(snapshot => {
-          let totalAmount = 0;
-          let soldItems = [];
-          
-          snapshot.docs.forEach(doc => {
-            const ciroData = doc.data();
-            totalAmount += ciroData.toplamTutar || 0;
-            
-            // Satılan ürünleri birleştir
-            if (ciroData.urunler && ciroData.urunler.length > 0) {
-              soldItems = [...soldItems, ...ciroData.urunler];
-            }
-          });
-          
-          // İstatistikleri güncelle
-          dailyStats = {
-            totalOrders: soldItems.length,
-            totalRevenue: totalAmount,
-            soldItems: soldItems
-          };
-          
-          // UI'ı güncelle
-          totalOrders.textContent = dailyStats.totalOrders;
-          totalRevenue.textContent = dailyStats.totalRevenue.toFixed(2) + ' TL';
-          totalRevenueAmount.textContent = dailyStats.totalRevenue.toFixed(2) + ' TL';
-        })
-        .catch(error => {
-          console.error("İstatistikler yüklenirken hata oluştu:", error);
-        });
-    }
-    
-    // Masa seçme
-    function selectTable(tableId, tableData) {
-      activeTableId = tableId;
-      selectedTableNumber.textContent = tableData.masaNumarasi;
-      activeTableContainer.style.display = 'block';
-      
-      loadTableOrders(tableId);
-    }
-    
-    // Masa siparişlerini yükleme
-    function loadTableOrders(tableId) {
-      orderDetails.innerHTML = '<div class="loading-message">Siparişler yükleniyor...</div>';
-      
-      siparislerCollection.where('masaId', '==', tableId)
-        .get()
-        .then(snapshot => {
-          orderDetails.innerHTML = '';
-          tableOrders[tableId] = [];
-          
-          if (snapshot.docs.length === 0) {
-            orderDetails.innerHTML = '<div class="notification notification-warning">Bu masada sipariş bulunmuyor.</div>';
-            orderTotal.textContent = '0.00 TL';
-            return;
-          }
-          
-          let totalAmount = 0;
-          
-          snapshot.docs.forEach(doc => {
-            const orderData = doc.data();
-            tableOrders[tableId].push({
-              id: doc.id,
-              ...orderData
+
+              tableItem.addEventListener("click", () =>
+                selectTable(doc.id, tableData)
+              );
+              tablesContainer.appendChild(tableItem);
             });
-            
-            const orderItem = document.createElement('div');
-            orderItem.className = 'order-item';
-            orderItem.innerHTML = `
-              <div class="order-item-name">${orderData.ad} x ${orderData.adet || 1}</div>
-              <div class="order-item-price">${(orderData.fiyat * (orderData.adet || 1)).toFixed(2)} TL</div>
-            `;
-            
-            orderDetails.appendChild(orderItem);
-            
-            // Toplam tutarı hesapla
-            totalAmount += orderData.fiyat * (orderData.adet || 1);
+          })
+          .catch((error) => {
+            console.error("Masalar yüklenirken hata oluştu:", error);
+            tablesContainer.innerHTML =
+              '<div class="notification notification-error">Masalar yüklenirken bir hata oluştu.</div>';
           });
-          
-          // Toplam tutar
-          orderTotal.textContent = `${totalAmount.toFixed(2)} TL`;
-        })
-        .catch(error => {
-          console.error("Siparişler yüklenirken hata oluştu:", error);
-          orderDetails.innerHTML = '<div class="notification notification-error">Siparişler yüklenirken bir hata oluştu.</div>';
-        });
-    }
-    
-    // Ödeme tamamla
-    function completePayment() {
-      if (!activeTableId) {
-        alert('Lütfen önce bir masa seçin');
-        return;
       }
-      
-      if (!tableOrders[activeTableId] || tableOrders[activeTableId].length === 0) {
-        alert('Bu masada ödeme yapılacak sipariş bulunmuyor');
-        return;
+
+      // Günlük istatistikleri yükle
+      function loadDailyStats() {
+        // Tamamlanmış siparişlerin toplamını ve cirosunu hesapla
+        ciroCollection
+          .get()
+          .then((snapshot) => {
+            let totalAmount = 0;
+            let soldItems = [];
+
+            snapshot.docs.forEach((doc) => {
+              const ciroData = doc.data();
+              totalAmount += ciroData.toplamTutar || 0;
+
+              // Satılan ürünleri birleştir
+              if (ciroData.urunler && ciroData.urunler.length > 0) {
+                soldItems = [...soldItems, ...ciroData.urunler];
+              }
+            });
+
+            // İstatistikleri güncelle
+            dailyStats = {
+              totalOrders: soldItems.length,
+              totalRevenue: totalAmount,
+              soldItems: soldItems,
+            };
+
+            // UI'ı güncelle
+            totalOrders.textContent = dailyStats.totalOrders;
+            totalRevenue.textContent =
+              dailyStats.totalRevenue.toFixed(2) + " TL";
+            totalRevenueAmount.textContent =
+              dailyStats.totalRevenue.toFixed(2) + " TL";
+          })
+          .catch((error) => {
+            console.error("İstatistikler yüklenirken hata oluştu:", error);
+          });
       }
-      
-      // Siparişleri topla
-      const orders = tableOrders[activeTableId];
-      let toplamTutar = 0;
-      const urunler = [];
-      
-      // Sipariş bilgilerini hazırla
-      orders.forEach(order => {
-        const siparisTutari = order.fiyat * (order.adet || 1);
-        toplamTutar += siparisTutari;
-        
-        urunler.push({
-          ad: order.ad,
-          fiyat: order.fiyat,
-          adet: order.adet || 1,
-          toplam: siparisTutari
-        });
-      });
-      
-      // Siparişleri ciroya ekle
-      const ciroKaydi = {
-        tarih: new Date().toISOString(),
-        masaNumarasi: selectedTableNumber.textContent,
-        urunler: urunler,
-        toplamTutar: toplamTutar
-      };
-      
-      // Ciro kaydı ekle
-      const ciroPromise = ciroCollection.add(ciroKaydi);
-      
-      // Siparişleri sil
-      const deletePromises = orders.map(order => {
-        return siparislerCollection.doc(order.id).delete();
-      });
-      
-      // Masayı boş olarak işaretle
-      const tablePromise = masalarCollection.doc(activeTableId).update({
-        durum: 'bos'
-      });
-      
-      // Garsona bildirim gönder
-      const notificationPromise = realdb.ref('bildirimler/garson').push({
-        tip: 'odeme_tamamlandi',
-        masaId: activeTableId,
-        masaNumarasi: selectedTableNumber.textContent,
-        zaman: ServerValue.TIMESTAMP
-      });
-      
-      // Tüm işlemleri tamamla
-      Promise.all([ciroPromise, ...deletePromises, tablePromise, notificationPromise])
-        .then(() => {
-          activeTableContainer.style.display = 'none';
-          activeTableId = null;
-          
-          // Masaları ve istatistikleri yenile
-          loadWaitingTables();
-          loadDailyStats();
-          
-          alert('Ödeme başarıyla tamamlandı');
-        })
-        .catch(error => {
-          console.error("Ödeme tamamlanırken hata oluştu:", error);
-          alert('Ödeme tamamlanırken bir hata oluştu');
-        });
-    }
-    
-    // Bildirimleri dinle
-    function listenForNotifications() {
-      realdb.ref('bildirimler/kasa').on('child_added', snapshot => {
-        const notification = snapshot.val();
-        
-        // Bildirimi görüntüle
-        const notificationElement = document.createElement('div');
-        notificationElement.className = 'notification notification-warning';
-        
-        if (notification.tip === 'hesap_istegi') {
-          notificationElement.textContent = `Masa ${notification.masaNumarasi} hesap istiyor!`;
-          
-          // Masaları yenile
-          loadWaitingTables();
-        }
-        
-        notificationsContainer.prepend(notificationElement);
-        
-        // Bildirimi 10 saniye sonra kaldır
-        setTimeout(() => {
-          notificationElement.remove();
-          snapshot.ref.remove();
-        }, 10000);
-      });
-    }
-    
-    // Satılan ürünleri yükle
-    function loadSoldProducts() {
-      soldProductsContainer.innerHTML = '<div class="loading-message">Ürünler yükleniyor...</div>';
-      
-      ciroCollection.get()
-        .then(snapshot => {
-          if (snapshot.docs.length === 0) {
-            soldProductsContainer.innerHTML = '<div class="notification notification-info">Henüz satış yapılmamış.</div>';
-            return;
-          }
-          
-          // Tüm ürünleri topla ve kategorilere ayır
-          const productsByCategory = {};
-          
-          snapshot.docs.forEach(doc => {
-            const ciroData = doc.data();
-            if (ciroData.urunler && ciroData.urunler.length > 0) {
-              ciroData.urunler.forEach(urun => {
-                // Ürünü kategorisine göre ayır (menüden kategori bilgisini almalıyız idealde)
-                const key = urun.ad;
-                if (!productsByCategory[key]) {
-                  productsByCategory[key] = {
-                    ad: urun.ad,
-                    toplamAdet: 0,
-                    toplamTutar: 0
-                  };
-                }
-                
-                productsByCategory[key].toplamAdet += urun.adet;
-                productsByCategory[key].toplamTutar += urun.toplam;
-              });
+
+      // Masa seçme
+      function selectTable(tableId, tableData) {
+        activeTableId = tableId;
+        selectedTableNumber.textContent = tableData.masaNumarasi;
+        activeTableContainer.style.display = "block";
+
+        loadTableOrders(tableId);
+      }
+
+      // Masa siparişlerini yükleme
+      function loadTableOrders(tableId) {
+        orderDetails.innerHTML =
+          '<div class="loading-message">Siparişler yükleniyor...</div>';
+
+        siparislerCollection
+          .where("masaId", "==", tableId)
+          .get()
+          .then((snapshot) => {
+            orderDetails.innerHTML = "";
+            tableOrders[tableId] = [];
+
+            if (snapshot.docs.length === 0) {
+              orderDetails.innerHTML =
+                '<div class="notification notification-warning">Bu masada sipariş bulunmuyor.</div>';
+              orderTotal.textContent = "0.00 TL";
+              return;
             }
+
+            let totalAmount = 0;
+
+            snapshot.docs.forEach((doc) => {
+              const orderData = doc.data();
+              tableOrders[tableId].push({
+                id: doc.id,
+                ...orderData,
+              });
+
+              const orderItem = document.createElement("div");
+              orderItem.className = "order-item";
+              orderItem.innerHTML = `
+              <div class="order-item-name">${orderData.ad} x ${
+                orderData.adet || 1
+              }</div>
+              <div class="order-item-price">${(
+                orderData.fiyat * (orderData.adet || 1)
+              ).toFixed(2)} TL</div>
+            `;
+
+              orderDetails.appendChild(orderItem);
+
+              // Toplam tutarı hesapla
+              totalAmount += orderData.fiyat * (orderData.adet || 1);
+            });
+
+            // Toplam tutar
+            orderTotal.textContent = `${totalAmount.toFixed(2)} TL`;
+          })
+          .catch((error) => {
+            console.error("Siparişler yüklenirken hata oluştu:", error);
+            orderDetails.innerHTML =
+              '<div class="notification notification-error">Siparişler yüklenirken bir hata oluştu.</div>';
           });
-          
-          // Ürünleri göster
-          soldProductsContainer.innerHTML = '';
-          
-          Object.values(productsByCategory).forEach(product => {
-            const productItem = document.createElement('div');
-            productItem.className = 'order-item';
-            productItem.innerHTML = `
+      }
+
+      // Ödeme tamamla
+      function completePayment() {
+        if (!activeTableId) {
+          alert("Lütfen önce bir masa seçin");
+          return;
+        }
+
+        if (
+          !tableOrders[activeTableId] ||
+          tableOrders[activeTableId].length === 0
+        ) {
+          alert("Bu masada ödeme yapılacak sipariş bulunmuyor");
+          return;
+        }
+
+        // Siparişleri topla
+        const orders = tableOrders[activeTableId];
+        let toplamTutar = 0;
+        const urunler = [];
+
+        // Sipariş bilgilerini hazırla
+        orders.forEach((order) => {
+          const siparisTutari = order.fiyat * (order.adet || 1);
+          toplamTutar += siparisTutari;
+
+          urunler.push({
+            ad: order.ad,
+            fiyat: order.fiyat,
+            adet: order.adet || 1,
+            toplam: siparisTutari,
+          });
+        });
+
+        // Siparişleri ciroya ekle
+        const ciroKaydi = {
+          tarih: new Date().toISOString(),
+          masaNumarasi: selectedTableNumber.textContent,
+          urunler: urunler,
+          toplamTutar: toplamTutar,
+        };
+
+        // Ciro kaydı ekle
+        const ciroPromise = ciroCollection.add(ciroKaydi);
+
+        // Siparişleri sil
+        const deletePromises = orders.map((order) => {
+          return siparislerCollection.doc(order.id).delete();
+        });
+
+        // Masayı boş olarak işaretle
+        const tablePromise = masalarCollection.doc(activeTableId).update({
+          durum: "bos",
+        });
+
+        // Garsona bildirim gönder
+        const notificationPromise = realdb.ref("bildirimler/garson").push({
+          tip: "odeme_tamamlandi",
+          masaId: activeTableId,
+          masaNumarasi: selectedTableNumber.textContent,
+          zaman: ServerValue.TIMESTAMP,
+        });
+
+        // Tüm işlemleri tamamla
+        Promise.all([
+          ciroPromise,
+          ...deletePromises,
+          tablePromise,
+          notificationPromise,
+        ])
+          .then(() => {
+            activeTableContainer.style.display = "none";
+            activeTableId = null;
+
+            // Masaları ve istatistikleri yenile
+            loadWaitingTables();
+            loadDailyStats();
+
+            alert("Ödeme başarıyla tamamlandı");
+          })
+          .catch((error) => {
+            console.error("Ödeme tamamlanırken hata oluştu:", error);
+            alert("Ödeme tamamlanırken bir hata oluştu");
+          });
+      }
+
+      // Bildirimleri dinle
+      function listenForNotifications() {
+        realdb.ref("bildirimler/kasa").on("child_added", (snapshot) => {
+          const notification = snapshot.val();
+
+          // Bildirimi görüntüle
+          const notificationElement = document.createElement("div");
+          notificationElement.className = "notification notification-warning";
+
+          if (notification.tip === "hesap_istegi") {
+            notificationElement.textContent = `Masa ${notification.masaNumarasi} hesap istiyor!`;
+
+            // Masaları yenile
+            loadWaitingTables();
+          }
+
+          notificationsContainer.prepend(notificationElement);
+
+          // Bildirimi 10 saniye sonra kaldır
+          setTimeout(() => {
+            notificationElement.remove();
+            snapshot.ref.remove();
+          }, 10000);
+        });
+      }
+
+      // Satılan ürünleri yükle
+      function loadSoldProducts() {
+        soldProductsContainer.innerHTML =
+          '<div class="loading-message">Ürünler yükleniyor...</div>';
+
+        ciroCollection
+          .get()
+          .then((snapshot) => {
+            if (snapshot.docs.length === 0) {
+              soldProductsContainer.innerHTML =
+                '<div class="notification notification-info">Henüz satış yapılmamış.</div>';
+              return;
+            }
+
+            // Tüm ürünleri topla ve kategorilere ayır
+            const productsByCategory = {};
+
+            snapshot.docs.forEach((doc) => {
+              const ciroData = doc.data();
+              if (ciroData.urunler && ciroData.urunler.length > 0) {
+                ciroData.urunler.forEach((urun) => {
+                  // Ürünü kategorisine göre ayır (menüden kategori bilgisini almalıyız idealde)
+                  const key = urun.ad;
+                  if (!productsByCategory[key]) {
+                    productsByCategory[key] = {
+                      ad: urun.ad,
+                      toplamAdet: 0,
+                      toplamTutar: 0,
+                    };
+                  }
+
+                  productsByCategory[key].toplamAdet += urun.adet;
+                  productsByCategory[key].toplamTutar += urun.toplam;
+                });
+              }
+            });
+
+            // Ürünleri göster
+            soldProductsContainer.innerHTML = "";
+
+            Object.values(productsByCategory).forEach((product) => {
+              const productItem = document.createElement("div");
+              productItem.className = "order-item";
+              productItem.innerHTML = `
               <div>
                 <div>${product.ad}</div>
                 <div class="text-small">Toplam: ${product.toplamAdet} adet</div>
               </div>
               <div>${product.toplamTutar.toFixed(2)} TL</div>
             `;
-            
-            soldProductsContainer.appendChild(productItem);
+
+              soldProductsContainer.appendChild(productItem);
+            });
+
+            // Ayrıca ciro raporu panelini de güncelle
+            updateRevenueReport(productsByCategory);
+          })
+          .catch((error) => {
+            console.error("Satılan ürünler yüklenirken hata oluştu:", error);
+            soldProductsContainer.innerHTML =
+              '<div class="notification notification-error">Ürünler yüklenirken bir hata oluştu.</div>';
           });
-          
-          // Ayrıca ciro raporu panelini de güncelle
-          updateRevenueReport(productsByCategory);
-        })
-        .catch(error => {
-          console.error("Satılan ürünler yüklenirken hata oluştu:", error);
-          soldProductsContainer.innerHTML = '<div class="notification notification-error">Ürünler yüklenirken bir hata oluştu.</div>';
-        });
-    }
-    
-    // Menü yönetimini yükle
-    function loadMenuManagement() {
-      menuManagementItems.innerHTML = '<div class="loading-message">Menü yükleniyor...</div>';
-      
-      menuCollection.get()
-        .then(snapshot => {
-          menuManagementItems.innerHTML = '';
-          
-          if (snapshot.docs.length === 0) {
-            menuManagementItems.innerHTML = '<div class="notification notification-warning">Menüde hiç ürün bulunmuyor.</div>';
-            return;
-          }
-          
-          const categoryFilter = menuCategoryFilter.value;
-          
-          snapshot.docs.forEach(doc => {
-            const menuItem = doc.data();
-            
-            // Kategori filtreleme
-            if (categoryFilter !== 'all' && menuItem.kategori !== categoryFilter) {
+      }
+
+      // Menü yönetimini yükle
+      function loadMenuManagement() {
+        menuManagementItems.innerHTML =
+          '<div class="loading-message">Menü yükleniyor...</div>';
+
+        menuCollection
+          .get()
+          .then((snapshot) => {
+            menuManagementItems.innerHTML = "";
+
+            if (snapshot.docs.length === 0) {
+              menuManagementItems.innerHTML =
+                '<div class="notification notification-warning">Menüde hiç ürün bulunmuyor.</div>';
               return;
             }
-            
-            const item = document.createElement('div');
-            item.className = 'menu-item';
-            item.innerHTML = `
+
+            const categoryFilter = menuCategoryFilter.value;
+
+            snapshot.docs.forEach((doc) => {
+              const menuItem = doc.data();
+
+              // Kategori filtreleme
+              if (
+                categoryFilter !== "all" &&
+                menuItem.kategori !== categoryFilter
+              ) {
+                return;
+              }
+
+              const item = document.createElement("div");
+              item.className = "menu-item";
+              item.innerHTML = `
               <div class="menu-item-header">
                 <div>
                   <div class="menu-item-title">${menuItem.ad}</div>
-                  <div class="menu-item-category">${getCategoryText(menuItem.kategori)}</div>
+                  <div class="menu-item-category">${getCategoryText(
+                    menuItem.kategori
+                  )}</div>
                 </div>
-                <div class="menu-item-price">${menuItem.fiyat.toFixed(2)} TL</div>
+                <div class="menu-item-price">${menuItem.fiyat.toFixed(
+                  2
+                )} TL</div>
               </div>
-              <div class="menu-item-description">${menuItem.aciklama || 'Açıklama yok'}</div>
+              <div class="menu-item-description">${
+                menuItem.aciklama || "Açıklama yok"
+              }</div>
               <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                 <button class="btn btn-small edit-menu-item">Düzenle</button>
                 <button class="btn btn-small delete-menu-item" style="background-color: var(--secondary-color);">Sil</button>
               </div>
             `;
-            
-            // Düzenleme butonu
-            item.querySelector('.edit-menu-item').addEventListener('click', () => {
-              editMenuItem(doc.id, menuItem);
+
+              // Düzenleme butonu
+              item
+                .querySelector(".edit-menu-item")
+                .addEventListener("click", () => {
+                  editMenuItem(doc.id, menuItem);
+                });
+
+              // Silme butonu
+              item
+                .querySelector(".delete-menu-item")
+                .addEventListener("click", () => {
+                  if (
+                    confirm(
+                      `${menuItem.ad} ürününü silmek istediğinize emin misiniz?`
+                    )
+                  ) {
+                    deleteMenuItem(doc.id);
+                  }
+                });
+
+              menuManagementItems.appendChild(item);
             });
-            
-            // Silme butonu
-            item.querySelector('.delete-menu-item').addEventListener('click', () => {
-              if (confirm(`${menuItem.ad} ürününü silmek istediğinize emin misiniz?`)) {
-                deleteMenuItem(doc.id);
-              }
-            });
-            
-            menuManagementItems.appendChild(item);
+          })
+          .catch((error) => {
+            console.error("Menü yüklenirken hata oluştu:", error);
+            menuManagementItems.innerHTML =
+              '<div class="notification notification-error">Menü yüklenirken bir hata oluştu.</div>';
           });
-        })
-        .catch(error => {
-          console.error("Menü yüklenirken hata oluştu:", error);
-          menuManagementItems.innerHTML = '<div class="notification notification-error">Menü yüklenirken bir hata oluştu.</div>';
-        });
-    }
-    
-    // Masa yönetimini yükle
-    function loadTableManagement() {
-      tableManagementItems.innerHTML = '<div class="loading-message">Masalar yükleniyor...</div>';
-      
-      masalarCollection.get()
-        .then(snapshot => {
-          tableManagementItems.innerHTML = '';
-          
-          if (snapshot.docs.length === 0) {
-            tableManagementItems.innerHTML = '<div class="notification notification-warning">Hiç masa bulunamadı.</div>';
-            return;
-          }
-          
-          // Masaları numaralarına göre sırala
-          const tables = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })).sort((a, b) => a.masaNumarasi - b.masaNumarasi);
-          
-          tables.forEach(tableData => {
-            const tableItem = document.createElement('div');
-            tableItem.className = `table-item ${tableData.durum}`;
-            tableItem.innerHTML = `
+      }
+
+      // Masa yönetimini yükle
+      function loadTableManagement() {
+        tableManagementItems.innerHTML =
+          '<div class="loading-message">Masalar yükleniyor...</div>';
+
+        masalarCollection
+          .get()
+          .then((snapshot) => {
+            tableManagementItems.innerHTML = "";
+
+            if (snapshot.docs.length === 0) {
+              tableManagementItems.innerHTML =
+                '<div class="notification notification-warning">Hiç masa bulunamadı.</div>';
+              return;
+            }
+
+            // Masaları numaralarına göre sırala
+            const tables = snapshot.docs
+              .map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              }))
+              .sort((a, b) => a.masaNumarasi - b.masaNumarasi);
+
+            tables.forEach((tableData) => {
+              const tableItem = document.createElement("div");
+              tableItem.className = `table-item ${tableData.durum}`;
+              tableItem.innerHTML = `
               <div class="table-number">${tableData.masaNumarasi}</div>
               <div class="table-status">${getDurumText(tableData.durum)}</div>
             `;
-            
-            tableManagementItems.appendChild(tableItem);
-          });
-        })
-        .catch(error => {
-          console.error("Masalar yüklenirken hata oluştu:", error);
-          tableManagementItems.innerHTML = '<div class="notification notification-error">Masalar yüklenirken bir hata oluştu.</div>';
-        });
-    }
-    
-    // Menü öğesi düzenleme
-    function editMenuItem(id, item) {
-      editingMenuItemId = id;
-      menuItemName.value = item.ad;
-      menuItemPrice.value = item.fiyat.toFixed(2);
-      menuItemCategory.value = item.kategori;
-      menuItemDescription.value = item.aciklama || '';
-      
-      menuItemForm.style.display = 'block';
-      // Düzenleme formuna scroll
-      menuItemForm.scrollIntoView({ behavior: 'smooth' });
-    }
-    
-    // Menü öğesi silme
-    function deleteMenuItem(id) {
-      menuCollection.doc(id).delete()
-        .then(() => {
-          // Menüyü yeniden yükle
-          loadMenuManagement();
-          alert("Ürün başarıyla silindi!");
-        })
-        .catch(error => {
-          console.error("Ürün silinirken hata oluştu:", error);
-          alert("Ürün silinirken bir hata oluştu!");
-        });
-    }
-    
-    // Menü öğesi kaydetme
-    function saveMenuItem() {
-      // Form doğrulama
-      if (!menuItemName.value.trim() || !menuItemPrice.value || !menuItemCategory.value) {
-        alert("Lütfen gerekli alanları doldurun!");
-        return;
-      }
-      
-      const menuItem = {
-        ad: menuItemName.value.trim(),
-        fiyat: parseFloat(menuItemPrice.value),
-        kategori: menuItemCategory.value,
-        aciklama: menuItemDescription.value.trim()
-      };
-      
-      // Yeni ürün mü yoksa düzenleme mi?
-      if (editingMenuItemId) {
-        // Mevcut ürünü güncelle
-        menuCollection.doc(editingMenuItemId).update(menuItem)
-          .then(() => {
-            resetMenuItemForm();
-            menuItemForm.style.display = 'none';
-            loadMenuManagement();
-            alert("Ürün başarıyla güncellendi!");
+
+              tableManagementItems.appendChild(tableItem);
+            });
           })
-          .catch(error => {
-            console.error("Ürün güncellenirken hata oluştu:", error);
-            alert("Ürün güncellenirken bir hata oluştu!");
+          .catch((error) => {
+            console.error("Masalar yüklenirken hata oluştu:", error);
+            tableManagementItems.innerHTML =
+              '<div class="notification notification-error">Masalar yüklenirken bir hata oluştu.</div>';
           });
-      } else {
-        // Yeni ürün ekle
-        menuCollection.add(menuItem)
+      }
+
+      // Menü öğesi düzenleme
+      function editMenuItem(id, item) {
+        editingMenuItemId = id;
+        menuItemName.value = item.ad;
+        menuItemPrice.value = item.fiyat.toFixed(2);
+        menuItemCategory.value = item.kategori;
+        menuItemDescription.value = item.aciklama || "";
+
+        menuItemForm.style.display = "block";
+        // Düzenleme formuna scroll
+        menuItemForm.scrollIntoView({ behavior: "smooth" });
+      }
+
+      // Menü öğesi silme
+      function deleteMenuItem(id) {
+        menuCollection
+          .doc(id)
+          .delete()
           .then(() => {
-            resetMenuItemForm();
-            menuItemForm.style.display = 'none';
+            // Menüyü yeniden yükle
             loadMenuManagement();
-            alert("Ürün başarıyla eklendi!");
+            alert("Ürün başarıyla silindi!");
           })
-          .catch(error => {
-            console.error("Ürün eklenirken hata oluştu:", error);
-            alert("Ürün eklenirken bir hata oluştu!");
+          .catch((error) => {
+            console.error("Ürün silinirken hata oluştu:", error);
+            alert("Ürün silinirken bir hata oluştu!");
           });
       }
-    }
-    
-    // Menü öğesi formunu sıfırla
-    function resetMenuItemForm() {
-      editingMenuItemId = null;
-      menuItemName.value = '';
-      menuItemPrice.value = '';
-      menuItemCategory.value = 'yemekler';
-      menuItemDescription.value = '';
-    }
-    
-    // Masa sayısını güncelle
-    function updateTableCount() {
-      const newCount = parseInt(tableCount.value, 10);
-      
-      if (isNaN(newCount) || newCount < 1) {
-        alert("Lütfen geçerli bir masa sayısı girin!");
-        return;
+
+      // Menü öğesi kaydetme
+      function saveMenuItem() {
+        // Form doğrulama
+        if (
+          !menuItemName.value.trim() ||
+          !menuItemPrice.value ||
+          !menuItemCategory.value
+        ) {
+          alert("Lütfen gerekli alanları doldurun!");
+          return;
+        }
+
+        const menuItem = {
+          ad: menuItemName.value.trim(),
+          fiyat: parseFloat(menuItemPrice.value),
+          kategori: menuItemCategory.value,
+          aciklama: menuItemDescription.value.trim(),
+        };
+
+        // Yeni ürün mü yoksa düzenleme mi?
+        if (editingMenuItemId) {
+          // Mevcut ürünü güncelle
+          menuCollection
+            .doc(editingMenuItemId)
+            .update(menuItem)
+            .then(() => {
+              resetMenuItemForm();
+              menuItemForm.style.display = "none";
+              loadMenuManagement();
+              alert("Ürün başarıyla güncellendi!");
+            })
+            .catch((error) => {
+              console.error("Ürün güncellenirken hata oluştu:", error);
+              alert("Ürün güncellenirken bir hata oluştu!");
+            });
+        } else {
+          // Yeni ürün ekle
+          menuCollection
+            .add(menuItem)
+            .then(() => {
+              resetMenuItemForm();
+              menuItemForm.style.display = "none";
+              loadMenuManagement();
+              alert("Ürün başarıyla eklendi!");
+            })
+            .catch((error) => {
+              console.error("Ürün eklenirken hata oluştu:", error);
+              alert("Ürün eklenirken bir hata oluştu!");
+            });
+        }
       }
-      
-      // Mevcut masaları al
-      masalarCollection.get()
-        .then(snapshot => {
-          const existingTables = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })).sort((a, b) => a.masaNumarasi - b.masaNumarasi);
-          
-          // Masa sayısını artırma
-          if (newCount > existingTables.length) {
-            const promises = [];
-            
-            // Yeni masaları ekle
-            for (let i = existingTables.length + 1; i <= newCount; i++) {
-              promises.push(
-                masalarCollection.add({
-                  masaNumarasi: i,
-                  durum: 'bos'
-                })
-              );
-            }
-            
-            Promise.all(promises)
-              .then(() => {
-                loadTableManagement();
-                loadWaitingTables();
-                alert(`Masa sayısı ${newCount} olarak güncellendi!`);
-              })
-              .catch(error => {
-                console.error("Masalar güncellenirken hata oluştu:", error);
-                alert("Masalar güncellenirken bir hata oluştu!");
-              });
-          }
-          // Masa sayısını azaltma
-          else if (newCount < existingTables.length) {
-            // Silinecek masaları belirle (yüksek numaralı masalardan başla)
-            const tablesToDelete = existingTables.slice(newCount);
-            
-            // Silinecek masaların boş olup olmadığını kontrol et
-            const tablesWithOrders = tablesToDelete.filter(table => table.durum !== 'bos');
-            
-            if (tablesWithOrders.length > 0) {
-              const tableNumbers = tablesWithOrders.map(t => t.masaNumarasi).join(', ');
-              if (!confirm(`Dikkat: Masa ${tableNumbers} dolu veya beklemede. Bu masaları silmek istediğinize emin misiniz?`)) {
-                return;
+
+      // Menü öğesi formunu sıfırla
+      function resetMenuItemForm() {
+        editingMenuItemId = null;
+        menuItemName.value = "";
+        menuItemPrice.value = "";
+        menuItemCategory.value = "yemekler";
+        menuItemDescription.value = "";
+      }
+
+      // Masa sayısını güncelle
+      function updateTableCount() {
+        const newCount = parseInt(tableCount.value, 10);
+
+        if (isNaN(newCount) || newCount < 1) {
+          alert("Lütfen geçerli bir masa sayısı girin!");
+          return;
+        }
+
+        // Mevcut masaları al
+        masalarCollection
+          .get()
+          .then((snapshot) => {
+            const existingTables = snapshot.docs
+              .map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              }))
+              .sort((a, b) => a.masaNumarasi - b.masaNumarasi);
+
+            // Masa sayısını artırma
+            if (newCount > existingTables.length) {
+              const promises = [];
+
+              // Yeni masaları ekle
+              for (let i = existingTables.length + 1; i <= newCount; i++) {
+                promises.push(
+                  masalarCollection.add({
+                    masaNumarasi: i,
+                    durum: "bos",
+                  })
+                );
               }
+
+              Promise.all(promises)
+                .then(() => {
+                  loadTableManagement();
+                  loadWaitingTables();
+                  alert(`Masa sayısı ${newCount} olarak güncellendi!`);
+                })
+                .catch((error) => {
+                  console.error("Masalar güncellenirken hata oluştu:", error);
+                  alert("Masalar güncellenirken bir hata oluştu!");
+                });
             }
-            
-            // Masaları sil
-            const promises = tablesToDelete.map(table => 
-              masalarCollection.doc(table.id).delete()
-            );
-            
-            Promise.all(promises)
-              .then(() => {
-                loadTableManagement();
-                loadWaitingTables();
-                alert(`Masa sayısı ${newCount} olarak güncellendi!`);
-              })
-              .catch(error => {
-                console.error("Masalar güncellenirken hata oluştu:", error);
-                alert("Masalar güncellenirken bir hata oluştu!");
-              });
-          } else {
-            alert("Masa sayısı zaten " + newCount);
-          }
-        })
-        .catch(error => {
-          console.error("Masalar yüklenirken hata oluştu:", error);
-          alert("Masalar güncellenirken bir hata oluştu!");
-        });
-    }
-    
-    // Kategori metni gösterimi
-    function getCategoryText(kategori) {
-      switch (kategori) {
-        case 'yemekler': return 'Yemekler';
-        case 'icecekler': return 'İçecekler';
-        case 'tatlilar': return 'Tatlılar';
-        default: return kategori;
+            // Masa sayısını azaltma
+            else if (newCount < existingTables.length) {
+              // Silinecek masaları belirle (yüksek numaralı masalardan başla)
+              const tablesToDelete = existingTables.slice(newCount);
+
+              // Silinecek masaların boş olup olmadığını kontrol et
+              const tablesWithOrders = tablesToDelete.filter(
+                (table) => table.durum !== "bos"
+              );
+
+              if (tablesWithOrders.length > 0) {
+                const tableNumbers = tablesWithOrders
+                  .map((t) => t.masaNumarasi)
+                  .join(", ");
+                if (
+                  !confirm(
+                    `Dikkat: Masa ${tableNumbers} dolu veya beklemede. Bu masaları silmek istediğinize emin misiniz?`
+                  )
+                ) {
+                  return;
+                }
+              }
+
+              // Masaları sil
+              const promises = tablesToDelete.map((table) =>
+                masalarCollection.doc(table.id).delete()
+              );
+
+              Promise.all(promises)
+                .then(() => {
+                  loadTableManagement();
+                  loadWaitingTables();
+                  alert(`Masa sayısı ${newCount} olarak güncellendi!`);
+                })
+                .catch((error) => {
+                  console.error("Masalar güncellenirken hata oluştu:", error);
+                  alert("Masalar güncellenirken bir hata oluştu!");
+                });
+            } else {
+              alert("Masa sayısı zaten " + newCount);
+            }
+          })
+          .catch((error) => {
+            console.error("Masalar yüklenirken hata oluştu:", error);
+            alert("Masalar güncellenirken bir hata oluştu!");
+          });
       }
-    }
-    
-    // Durum metnini gösterimi
-    function getDurumText(durum) {
-      switch (durum) {
-        case 'bos': return 'Boş';
-        case 'dolu': return 'Dolu';
-        case 'beklemede': return 'Hesap Bekliyor';
-        default: return durum;
+
+      // Kategori metni gösterimi
+      function getCategoryText(kategori) {
+        switch (kategori) {
+          case "yemekler":
+            return "Yemekler";
+          case "icecekler":
+            return "İçecekler";
+          case "tatlilar":
+            return "Tatlılar";
+          default:
+            return kategori;
+        }
       }
-    }
-    
-    // Ciro raporu panelini güncelle
-    function updateRevenueReport(productsByCategory) {
-      revenueProductsContainer.innerHTML = '';
-      
-      if (!productsByCategory || Object.keys(productsByCategory).length === 0) {
-        revenueProductsContainer.innerHTML = '<div class="notification notification-info">Henüz satış yapılmamış.</div>';
-        return;
+
+      // Durum metnini gösterimi
+      function getDurumText(durum) {
+        switch (durum) {
+          case "bos":
+            return "Boş";
+          case "dolu":
+            return "Dolu";
+          case "beklemede":
+            return "Hesap Bekliyor";
+          default:
+            return durum;
+        }
       }
-      
-      // Ürünleri satış tutarına göre sırala (en çok satandan en aza)
-      const sortedProducts = Object.values(productsByCategory).sort((a, b) => b.toplamTutar - a.toplamTutar);
-      
-      sortedProducts.forEach(product => {
-        const productItem = document.createElement('div');
-        productItem.className = 'order-item';
-        productItem.innerHTML = `
+
+      // Ciro raporu panelini güncelle
+      function updateRevenueReport(productsByCategory) {
+        revenueProductsContainer.innerHTML = "";
+
+        if (
+          !productsByCategory ||
+          Object.keys(productsByCategory).length === 0
+        ) {
+          revenueProductsContainer.innerHTML =
+            '<div class="notification notification-info">Henüz satış yapılmamış.</div>';
+          return;
+        }
+
+        // Ürünleri satış tutarına göre sırala (en çok satandan en aza)
+        const sortedProducts = Object.values(productsByCategory).sort(
+          (a, b) => b.toplamTutar - a.toplamTutar
+        );
+
+        sortedProducts.forEach((product) => {
+          const productItem = document.createElement("div");
+          productItem.className = "order-item";
+          productItem.innerHTML = `
           <div>
             <div class="menu-item-title">${product.ad}</div>
             <div class="text-small">Toplam: ${product.toplamAdet} adet</div>
           </div>
-          <div class="menu-item-price">${product.toplamTutar.toFixed(2)} TL</div>
+          <div class="menu-item-price">${product.toplamTutar.toFixed(
+            2
+          )} TL</div>
         `;
-        
-        revenueProductsContainer.appendChild(productItem);
-      });
-    }
-  </script>
-</body>
-</html> 
+
+          revenueProductsContainer.appendChild(productItem);
+        });
+      }
+    </script>
+  </body>
+</html>
