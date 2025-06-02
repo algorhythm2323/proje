@@ -13,6 +13,12 @@ const USERS = {
     role: "garson",
     name: "Mehmet Kaya (Garson)",
   },
+  garson4: {
+    email: "garson4@restoran.com",
+    password: "garson4567",
+    role: "garson",
+    name: "Mehmet (Garson)",
+  },
   garson3: {
     email: "elif.garson@restoran.com",
     password: "elif789",
